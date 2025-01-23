@@ -9,6 +9,7 @@ import Quotation from '@/views/tasks/billing/Quotation.vue'
 import DeliveryOrder from '@/views/tasks/billing/DeliveryOrder.vue'
 import Invoice from '@/views/tasks/billing/Invoice.vue'
 import Testing from '@/views/tasks/billing/testing.vue'
+import QuoteDetails from '@/views/tasks/billing/QuoteDetails.vue'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,11 @@ const router = createRouter({
             path: '/quotation',
             name: 'Quotation',
             component: Quotation,
+        },
+        {
+            path: '/quotation-details',
+            name: 'Quotation Details',
+            component: QuoteDetails,
         },
         {
             path: '/delivery-order',

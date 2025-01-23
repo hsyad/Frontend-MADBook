@@ -20,8 +20,11 @@
     input[type="search"],
     input[type="tel"],
     input[type="url"],
+    input {
+        @apply mb-2 p-2 w-full border border-gray-300 rounded-md shadow-sm;
+    }
     textarea {
-        @apply block w-full rounded-md border-0 p-2 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm bg-white;
+        @apply block w-full rounded-md border border-gray-300 p-2 text-slate-900 shadow-sm sm:text-sm bg-white;
     }
     label {
         @apply block text-sm font-medium leading-6 text-slate-900 first-letter:capitalize;
@@ -35,9 +38,7 @@
     main {
         @apply w-full mx-auto;
     }
-    .primary-btn {
-        @apply flex w-full justify-center rounded-md bg-blue-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-slate-400 disabled:cursor-wait;
-    }
+
     .text-link {
         @apply font-semibold text-blue-500 hover:text-blue-600;
     }
@@ -51,27 +52,21 @@
         @apply text-xs text-red-500 mt-1;
     }
     table {
-        @apply w-full text-sm text-center shadow-lg overflow-hidden mb-6 table-auto bg-white;
+        @apply w-full text-sm text-center border-collapse shadow-md overflow-hidden mt-4 mb-6 table-auto bg-white;
     }
     thead {
         @apply text-xs uppercase font-medium border-b border-slate-100 text-slate-100 bg-blue-950;
     }
     tbody tr {
-        @apply hover:bg-slate-100 w-full p-0;
+        @apply hover:bg-gray-100 w-full p-0;
     }
     th {
         @apply px-6 py-4 text-center;
     }
     td {
-        @apply border border-gray-300 text-center;
+        @apply border border-gray-300 text-center px-1;
     }
     .avatar {
-        @apply w-8 h-8 rounded-full overflow-hidden object-center object-cover;
-    }
-    h1 {
-        @apply font-bold text-2xl mb-10;
-    }
-    h2 {
-        @apply font-bold text-xl mb-5;
+        @apply w-10 h-10 rounded-full overflow-hidden object-center object-cover;
     }
 }
