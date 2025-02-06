@@ -22,10 +22,10 @@
         <!-- <div class="divider"></div> -->
 
         <div class="sidebar-links">
-            <router-link class="button" to="/">
+            <!-- <router-link class="button" to="/">
                 <span class="material-icons">home</span>
                 <span class="text">Dashboard</span>
-            </router-link>
+            </router-link> -->
             <!-- <router-link class="button" to="/courses">
                 <span class="material-icons">school</span>
                 <span class="text">Courses</span>
@@ -47,16 +47,60 @@
 
         <!-- <div class="divider"></div> -->
 
+        <!-- MAINPAGE -->
         <div class="sidebar-links">
-            <router-link class="button" to="/billing">
-                <span class="material-icons">money</span>
-                <span class="text">Billing</span>
+            <router-link class="button" to="/madbook">
+                <span class="material-icons">filter_1</span>
+                <span class="text">MADBook</span>
             </router-link>
         </div>
+        <!-- CREATE QUOTE -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/create-quotation">
+                <span class="material-icons">filter_2</span>
+                <span class="text">Create Quote</span>
+            </router-link>
+        </div>
+        <!-- QUOTE DETAILS -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/quotation/:id">
+                <span class="material-icons">filter_3</span>
+                <span class="text">Quote Details</span>
+            </router-link>
+        </div>
+        <!-- CREATE DO -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/create-delivery-order">
+                <span class="material-icons">filter_4</span>
+                <span class="text">Create DO</span>
+            </router-link>
+        </div>
+        <!-- DO DETAILS -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/do/:id">
+                <span class="material-icons">filter_5</span>
+                <span class="text">DO Details</span>
+            </router-link>
+        </div>
+        <!-- CREATE INVOICE -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/create-invoice">
+                <span class="material-icons">filter_6</span>
+                <span class="text">Create Invoice</span>
+            </router-link>
+        </div>
+        <!-- INVOICE DETAILS -->
+        <div class="sidebar-links">
+            <router-link class="button" to="/invoice/:id">
+                <span class="material-icons">filter_7</span>
+                <span class="text">Invoice Details</span>
+            </router-link>
+        </div>
+        <!-- TESTING -->
         <div class="sidebar-links">
             <router-link class="button" to="/testing">
-                <span class="material-icons">sentiment_satisfied</span>
-                <span class="text">Testing</span>
+                <span class="material-icons">priority_high</span>
+                <span class="text">Testing: Quote Details</span>
             </router-link>
         </div>
 
