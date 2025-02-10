@@ -17,7 +17,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Fetch Quotation from API
         async fetchQuote() {
             try {
-                const response = await axios.get('api/Quotation');
+                const response = await axios.get('/Quotation');
                 this.quotations = response.data;
             } catch (error) {
                 console.error("Error fetching quotations:", error);
@@ -26,7 +26,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Fetch DeliveryOrder from API
         async fetchDO() {
             try {
-                const response = await axios.get('api/DeliveryOrder');
+                const response = await axios.get('/DeliveryOrder');
                 this.deliveryOrders = response.data;
             } catch (error) {
                 console.error("Error fetching delivery orders:", error);
@@ -35,7 +35,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Fetch Invoice from API
         async fetchInvoice() {
             try {
-                const response = await axios.get('api/Invoice');
+                const response = await axios.get('/Invoice');
                 this.invoices = response.data;
             } catch (error) {
                 console.error("Error fetching invoices:", error);
@@ -45,7 +45,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Create a New Quotation
         async createQuote(quoteData) {
             try {
-                const response = await axios.post('api/Quotation/Store', quoteData);
+                const response = await axios.post('/Quotation/Store', quoteData);
                 this.quotations.push(response.data); // Add created quote to the state
             } catch (error) {
                 console.error("Error creating quotation: ", error);
@@ -54,7 +54,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Create a New Delivery Order
         async createDO(doData) {
             try {
-                const response = await axios.post('api/DeliveryOrder/Store', doData);
+                const response = await axios.post('/DeliveryOrder/Store', doData);
                 this.deliveryOrders.push(response.data); // Add created quote to the state
             } catch (error) {
                 console.error("Error creating delivery order: ", error);
@@ -63,7 +63,7 @@ export const useMADBookStore = defineStore('madbook', {
         //Create a New Invoices
         async createInvoice(invData) {
             try {
-                const response = await axios.post('api/Invoice/Store', invData);
+                const response = await axios.post('/Invoice/Store', invData);
                 this.invoices.push(response.data); // Add created quote to the state
             } catch (error) {
                 console.error("Error creating invoice: ", error);

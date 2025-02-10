@@ -31,7 +31,7 @@
 
             <!-- ADD NEW QUOTATION -->
             <button class="btn btn-success rounded-md text-white font-bold w-40" v-if="currentTab === 'quotation'"
-                @click="addItem">
+                @click="addQuote">
                 Add Quotation
             </button>
         </div>
@@ -117,62 +117,42 @@
     </div>
 </template>
 
-<script>
+<script setup>
 import { useMADBookStore } from '@/stores/madbookStore';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 
-export default {
-    name: 'MADBookMain',
-    data() {
-        return {
-            currentTab: 'quotation',
-            isConfirmed: false,
-        };
-    },
-    setup() {
-        const madbookStore = useMADBookStore();
+const madbookStore = useMADBookStore();
+const router = useRouter();
 
-        // Fetch data on component mount
-        madbookStore.fetchQuote();
-        madbookStore.fetchInvoice();
+// Fetch data on component mount
+madbookStore.fetchQuote();
+madbookStore.fetchInvoice();
 
-        return {
-            madbookStore,
-        };
-    },
-    computed: {
-        statusButton() {
-            return this.isConfirmed ? "bg-green-500" : "bg-gray-300";
-        },
-    },
-    methods: {
-        addItem() {
-            this.$router.push('/create-quotation');
-        },
-        toggleBilling(inv) {
-            if (inv.status == "Pending") {
-                inv.status = "Paid";
-            } else if (inv.status === "Paid") {
-                inv.status = "Past Due";
-            } else if (inv.status === "Past Due") {
-                inv.status = "Pending";
-            }
-        },
-        getPaymentStatus(status) {
-            switch (status) {
-                case "Paid":
-                    return "bg-green-600";
-                case "Pending":
-                    return "bg-yellow-600";
-                case "Past Due":
-                    return "bg-red-600";
-                default:
-                    return "bg-gray-300";
-            }
-        },
-        viewQuoteDetails(quote) {
-            this.$router.push({ name: 'QuotationDetails', params: { id: quote.id } });
-        },
-    },
+const statusButton = ref("Pending");
+const currentTab = ref("quotation");
+
+const addQuote = () => {
+    router.push('/create-quotation');
+};
+
+const toggleBilling = (inv) => {
+    const statuses = ["Pending", "Paid", "Past Due"];
+    const currentIndex = statuses.indexOf(inv.status);
+    inv.status = statuses[(currentIndex + 1) % statuses.length];
+};
+
+const getPaymentStatus = (status) => {
+    const statusColors = {
+        Paid: "bg-green-600",
+        Pending: "bg-yellow-600",
+        "Past Due": "bg-red-600",
+    };
+    return statusColors[status] || "bg-gray-300";
+};
+
+const viewQuoteDetails = (quote) => {
+    router.push(`/quotation/${quote.Id}`);
 };
 </script>
 
