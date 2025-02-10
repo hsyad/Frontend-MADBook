@@ -4,12 +4,13 @@
             <div class="d-flex mb-4 justify-between items-center">
                 <h2 class="fw-semibold mb-0">Invoice Details</h2>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary rounded-md text-white font-bold h-12 w-20">
+                    <button @click="downloadDoc" class="btn btn-primary rounded-md text-white font-bold h-12 w-20">
                         <span class="material-icons text-white align-middle">
                             download
                         </span>
                     </button>
-                    <button class="btn btn-success rounded-md text-white font-bold h-12 w-20">Edit</button>
+                    <button @click="showEditWarning"
+                        class="btn btn-success rounded-md text-white font-bold h-12 w-20">Edit</button>
                 </div>
             </div>
             <div class="border border-dark rounded p-4 ">
@@ -27,7 +28,7 @@
 
                         <!-- UI Testing -->
                         <div v-if="logo" class="d-inline-block overflow-hidden h-20">
-                            <img :src="logo" alt="logo" style="height: 100%; object-fit: contain;">
+                            <img :src="logo" alt="logo" class="h-full object-contain">
                         </div>
                     </div>
 
@@ -48,8 +49,8 @@
                             <p class="mb-1 fs-6 whitespace-pre">{{ c_address }}</p> <!--UI Testing-->
                         </div>
 
-                        <!-- DO DETAILS -->
-                        <div class="container d-flex gap-4 justify-end">
+                        <!-- INVOICE DETAILS -->
+                        <div class="container d-flex gap-2 justify-end">
                             <div class="text-end">
                                 <!-- <p class="mb-1"><strong>Quote No: </strong>{{ quotation.id }}</p> -->
                                 <p class="mb-1"><strong>Invoice No: </strong></p> <!--UI Testing-->
@@ -119,73 +120,74 @@
             <div class="flex m-2 justify-center">
 
             </div>
-            <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-success rounded-md text-white font-bold w-full">Create Delivery Order</button>
-                <button class="btn btn-success rounded-md text-white font-bold w-full">Create Invoice</button>
-            </div>
         </div>
     </main>
 </template>
 
-<script>
+<script setup>
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { computed, ref } from 'vue';
 import logoImg from '/src/assets/images/kucen.png';
+import { useRouter } from 'vue-router';
 
-export default {
-    setup() {
-        const logo = ref(logoImg);
-        //INFO
-        const business_address = ref("123 Business Street, City, State");
-        const email_from = ref("info@business.com");
-        //CUSTOMER
-        const c_name = ref("John Doe");
-        const c_no = ref("+60123456789");
-        const c_address = ref("Megan Ambassy, Taman U Thant, \n55000 Kuala Lumpur, \nWilayah Persekutuan Kuala Lumpur");
-        const referenceNumber = ref("#12345");
-        //DATES
-        const issue_date = ref("2025-01-28");
-        const delivery_date = ref("2025-02-28");
-        const due_date = ref("2025-02-28");
-        //ITEMS
-        const items = ref([
-            { name: "Item 1", price: 100.0, quantity: 2, amount: 200.0 },
-            { name: "Item 2", price: 50.0, quantity: 1, amount: 50.0 },
-        ]);
-        const calculate_total = ref("250.00");
-        const notes = ref("Please ensure payment within the validity period.");
-        //SHIPPING
-        const ship_by = ref("Ninjavan");
-        const ship_fee = ref("10.00");
+const router = useRouter();
+const logo = ref(logoImg);
+//INFO
+const business_address = ref("123 Business Street, City, State");
+const email_from = ref("info@business.com");
+//CUSTOMER
+const c_name = ref("John Doe");
+const c_no = ref("+60123456789");
+const c_address = ref("Megan Ambassy, Taman U Thant, \n55000 Kuala Lumpur, \nWilayah Persekutuan Kuala Lumpur");
+const referenceNumber = ref("1234");
+//DATES
+const issue_date = ref("2025-01-28");
+const delivery_date = ref("2025-02-28");
+const due_date = ref("2025-02-28");
+//ITEMS
+const items = ref([
+    { name: "Item 1", price: 100.0, quantity: 2, amount: 200.0 },
+    { name: "Item 2", price: 50.0, quantity: 1, amount: 50.0 },
+]);
+const calculate_total = ref("250.00");
+const notes = ref("Please ensure payment within the validity period.");
+//SHIPPING
+const ship_by = ref("Ninjavan");
+const ship_fee = ref("10.00");
 
-        //BANK DETAILS
-        const bank_name = ref("Maybank Malaysia");
-        const acc_holder = ref("Ali bin Abu");
-        const acc_num = ref("1234567890");
+//BANK DETAILS
+const bank_name = ref("Maybank Malaysia");
+const acc_holder = ref("Ali bin Abu");
+const acc_num = ref("1234567890");
 
-        return {
-            logo,
-            business_address,
-            email_from,
-            c_name,
-            c_no,
-            c_address,
-            referenceNumber,
-            issue_date,
-            delivery_date,
-            due_date,
-            items,
-            notes,
-            calculate_total,
-            ship_by,
-            ship_fee,
-            bank_name,
-            acc_holder,
-            acc_num,
-        };
+const downloadDoc = () => {
+    try {
+        Swal.fire({
+            title: 'Success',
+            text: 'Document downloaded successfully',
+            icon: 'success',
+            confirmButtonColor: '#4cbb17'
+        });
+    } catch (error) {
+        Swal.fire({
+            title: 'Error',
+            text: 'Failed to download document',
+            icon: 'error',
+            confirmButtonText: 'OK',
+        });
     }
-};
+}
+
+const showEditWarning = () => {
+    Swal.fire({
+        title: "Attention!",
+        text: "To update the invoice, you must first edit the quote and delivery order documents. Once updated, generate a new invoice, as invoice details are automatically filled based on these documents.",
+        icon: "warning",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#FFA500" //orange
+    });
+}
 </script>
 
 <style lang="scss" scoped>

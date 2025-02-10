@@ -21,7 +21,6 @@
                                     <button type="button" class="btn-close" @click="closeModal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <!-- c_name, c_no, c_address, issue_date, delivery_date, due_date, ship_by, ship_fee, notes, bankDetails(bank_name, acc_holder, acc_num) -->
                                     <!-- FORM -->
                                     <form @submit.prevent="saveEdit">
                                         <div class="d-flex gap-2 align-baseline">
@@ -31,7 +30,7 @@
                                                     placeholder="Enter customer name">
                                                 <input type="text" v-model="formData.c_no"
                                                     placeholder="Enter customer phone number">
-                                                <textarea row="3" id="c_address" v-model="formData.delivery_date"
+                                                <textarea row="3" id="c_address" v-model="formData.c_address"
                                                     placeholder="Eg: 456 Client Road,&#10;Town, 12345,&#10;State"></textarea>
                                             </div>
                                             <div class="flex-1">
@@ -103,9 +102,9 @@
                     <!-- OVERLAY  -->
                     <div v-if="showEditModal" class="modal-backdrop fade show"></div>
                 </div>
-
             </div>
-            <div class=" border border-dark rounded p-4 ">
+
+            <div class=" border border-dark rounded p-4">
                 <!-- <div class=" px-3" v-if="quotation"> -->
                 <!-- UI Testing -->
                 <div class="px-3">
@@ -120,7 +119,7 @@
 
                         <!-- UI Testing -->
                         <div v-if="logo" class="d-inline-block overflow-hidden h-20">
-                            <img :src="logo" alt="logo" style="height: 100%; object-fit: contain;">
+                            <img :src="logo" alt="logo" class="h-full object-contain">
                         </div>
                     </div>
 
@@ -138,11 +137,11 @@
                             <!-- <p class="mb-1 fs-6"><strong>{{ quotation.c_no }}</strong></p> -->
                             <p class="mb-1 fs-6">{{ c_no }}</p> <!--UI Testing-->
                             <!-- <p class="mb-1 fs-6 text-wrap"><strong>{{ quotation.c_address }}</strong></p> -->
-                            <p class="mb-1 fs-6 text-wrap" v-html="formattedAddress"></p> <!--UI Testing-->
+                            <p class="mb-1 fs-6 whitespace-nowrap">{{ c_address }}</p> <!--UI Testing-->
                         </div>
 
                         <!-- DO DETAILS -->
-                        <div class="container d-flex gap-4 justify-end">
+                        <div class="container d-flex gap-2 justify-end">
                             <div class="text-end">
                                 <!-- <p class="mb-1"><strong>Quote No: </strong>{{ quotation.id }}</p> -->
                                 <p class="mb-1"><strong>DO No: </strong></p> <!--UI Testing-->
@@ -154,7 +153,7 @@
                                 <p class="mb-1"><strong>Due Date: </strong></p> <!--UI Testing-->
                             </div>
                             <div class="text-start">
-                                <p class="mb-1">{{ referenceNumber }}</p> <!--UI Testing-->
+                                <p class="mb-1">{{ reference_number }}</p> <!--UI Testing-->
                                 <p class="mb-1">{{ issue_date }}</p> <!--UI Testing-->
                                 <p class="mb-1">{{ delivery_date }}</p>
                                 <p class="mb-1">{{ due_date }}</p> <!--UI Testing-->
@@ -204,17 +203,11 @@
             <div class="flex m-2 justify-center">
 
             </div>
-            <div class="d-flex gap-1 mb-2">
-                <button @click="navigateToDO" class="btn btn-success rounded-md text-white font-bold w-full">Create
-                    Delivery Order</button>
-                <button @click="navigateToInvoice" class="btn btn-success rounded-md text-white font-bold w-full">Create
-                    Invoice</button>
-            </div>
         </div>
     </main>
 </template>
 
-<script>
+<script setup>
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { computed, ref } from 'vue';
@@ -222,153 +215,104 @@ import logoImg from '/src/assets/images/kucen.png';
 import { reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
-export default {
-    setup() {
-        const router = useRouter();
+const router = useRouter();
 
-        const logo = ref(logoImg);
-        //INFO
-        const business_address = ref("123 Business Street, City, State");
-        const email_from = ref("info@business.com");
-        //CUSTOMER
-        const c_name = ref("John Doe");
-        const c_no = ref("+60123456789");
-        const c_address = ref("Megan Ambassy, Taman U Thant, \n55000 Kuala Lumpur, \nWilayah Persekutuan Kuala Lumpur");
-        const referenceNumber = ref("#12345");
-        //DATES
-        const issue_date = ref("2025-01-28");
-        const delivery_date = ref("2025-02-28");
-        const due_date = ref("2025-02-28");
-        //ITEMS
-        const items = ref([
-            { name: "Item 1", price: 100.0, quantity: 2, amount: 200.0 },
-            { name: "Item 2", price: 50.0, quantity: 1, amount: 50.0 },
-        ]);
-        const calculate_total = ref("250.00");
-        const notes = ref("Please ensure payment within the validity period.");
-        //SHIPPING
-        const ship_by = ref("Ninjavan");
-        const ship_fee = ref("10.00");
+const logo = ref(logoImg);
+//INFO
+const business_address = ref("123 Business Street, City, State");
+const email_from = ref("info@business.com");
+//CUSTOMER
+const c_name = ref("John Doe");
+const c_no = ref("+60123456789");
+const c_address = ref("Megan Ambassy, Taman U Thant, \n55000 Kuala Lumpur, \nWilayah Persekutuan Kuala Lumpur");
+const reference_number = ref("1234");
+//DATES
+const issue_date = ref("2025-01-28");
+const delivery_date = ref("2025-02-28");
+const due_date = ref("2025-02-28");
+//ITEMS
+const items = ref([
+    { name: "Item 1", price: 100.0, quantity: 2, amount: 200.0 },
+    { name: "Item 2", price: 50.0, quantity: 1, amount: 50.0 },
+]);
+const calculate_total = ref(250.00);
+const notes = ref("Please ensure payment within the validity period.");
+//SHIPPING
+const ship_by = ref("Ninjavan");
+const ship_fee = ref("10.00");
 
-        //BANK DETAILS
-        const bank_name = ref("Maybank Malaysia");
-        const acc_holder = ref("Ali bin Abu");
-        const acc_num = ref("1234567890");
+//BANK DETAILS
+const bank_name = ref("Maybank Malaysia");
+const acc_holder = ref("Ali bin Abu");
+const acc_num = ref("1234567890");
 
-        //MODAL
-        const showEditModal = ref(false);
-        const showBankDetails = ref(false);
-        const formData = reactive({
-            c_name: "",
-            c_no: "",
-            c_address: "",
-            issue_date: "",
-            delivery_date: "",
-            due_date: "",
-            ship_by: "",
-            ship_fee: 0.00,
-            notes: "",
-            bankDetails: {
-                bank_name: "",
-                acc_holder: "",
-                acc_num: ""
-            },
-        });
+//MODAL
+const showEditModal = ref(false);
+const showBankDetails = ref(false);
+const formData = reactive({
+    c_name: "",
+    c_no: "",
+    c_address: "",
+    issue_date: "",
+    delivery_date: "",
+    due_date: "",
+    ship_by: "",
+    ship_fee: 0.00,
+    notes: "",
+    bankDetails: {
+        bank_name: "",
+        acc_holder: "",
+        acc_num: ""
+    },
+});
 
-
-        const formattedAddress = computed(() => {
-            return c_address.value.replace(/\n/g, '<br>');
-        });
-
-        const downloadDoc = () => {
-            try {
-                Swal.fire('Success', 'Document downloaded successfully', 'success');
-            } catch (error) {
-                Swal.fire('Error', 'Failed to download document', 'error');
-            }
-        }
-
-        const openModal = () => {
-            formData.c_name = c_name.value;
-            formData.c_no = c_no.value;
-            formData.c_address = c_address.value;
-            formData.issue_date = issue_date.value;
-            formData.delivery_date = delivery_date.value;
-            formData.due_date = due_date.value;
-            formData.ship_by = ship_by.value;
-            formData.ship_fee = ship_fee.value;
-            formData.notes = notes.value;
-            formData.bankDetails.bank_name = bank_name.value;
-            formData.bankDetails.acc_holder = acc_holder.value;
-            formData.bankDetails.acc_num = acc_num.value;
-
-            showEditModal.value = true;
-        }
-        const closeModal = () => {
-            showEditModal.value = false;
-        }
-        const toggleBankDetails = () => {
-            showBankDetails.value = !showBankDetails.value;
-        }
-        const saveEdit = () => {
-            c_name.value = formData.c_name;
-            c_no.value = formData.c_no;
-            c_address.value = formData.c_address;
-            issue_date.value = formData.issue_date;
-            delivery_date.value = formData.delivery_date;
-            due_date.value = formData.due_date;
-            ship_by.value = formData.ship_by;
-            ship_fee.value = formData.ship_fee;
-            notes.value = formData.notes;
-            bank_name.value = formData.bankDetails.bank_name;
-            acc_holder.value = formData.bankDetails.acc_holder;
-            acc_num.value = formData.bankDetails.acc_num;
-
-            Swal.fire('Success', 'Delivery Order updated successfully', 'success');
-            closeModal();
-        }
-
-        const navigateToDO = () => {
-            router.push({ name: 'CreateDO' });
-        }
-
-        const navigateToInvoice = () => {
-            router.push({ name: 'CreateInvoice' });
-        }
-
-        return {
-            logo,
-            business_address,
-            email_from,
-            c_name,
-            c_no,
-            c_address,
-            referenceNumber,
-            issue_date,
-            delivery_date,
-            due_date,
-            items,
-            notes,
-            calculate_total,
-            formattedAddress,
-            ship_by,
-            ship_fee,
-            bank_name,
-            acc_holder,
-            acc_num,
-            downloadDoc,
-            openModal,
-            closeModal,
-            toggleBankDetails,
-            saveEdit,
-            showEditModal,
-            showBankDetails,
-            formData,
-            navigateToDO,
-            navigateToInvoice
-        };
+const downloadDoc = () => {
+    try {
+        Swal.fire('Success', 'Document downloaded successfully', 'success');
+    } catch (error) {
+        Swal.fire('Error', 'Failed to download document', 'error', '#009A00');
     }
-};
+}
+
+const openModal = () => {
+    formData.c_name = c_name.value;
+    formData.c_no = c_no.value;
+    formData.c_address = c_address.value;
+    formData.issue_date = issue_date.value;
+    formData.delivery_date = delivery_date.value;
+    formData.due_date = due_date.value;
+    formData.ship_by = ship_by.value;
+    formData.ship_fee = ship_fee.value;
+    formData.notes = notes.value;
+    formData.bankDetails.bank_name = bank_name.value;
+    formData.bankDetails.acc_holder = acc_holder.value;
+    formData.bankDetails.acc_num = acc_num.value;
+
+    showEditModal.value = true;
+}
+const closeModal = () => {
+    showEditModal.value = false;
+}
+const toggleBankDetails = () => {
+    showBankDetails.value = !showBankDetails.value;
+}
+const saveEdit = () => {
+    c_name.value = formData.c_name;
+    c_no.value = formData.c_no;
+    c_address.value = formData.c_address;
+    issue_date.value = formData.issue_date;
+    delivery_date.value = formData.delivery_date;
+    due_date.value = formData.due_date;
+    ship_by.value = formData.ship_by;
+    ship_fee.value = formData.ship_fee;
+    notes.value = formData.notes;
+    bank_name.value = formData.bankDetails.bank_name;
+    acc_holder.value = formData.bankDetails.acc_holder;
+    acc_num.value = formData.bankDetails.acc_num;
+
+    Swal.fire('Success', 'Delivery Order updated successfully', 'success');
+    closeModal();
+}
 </script>
 
 <style lang="scss" scoped>
