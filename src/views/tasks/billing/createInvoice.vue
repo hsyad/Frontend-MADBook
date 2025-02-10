@@ -28,8 +28,11 @@
                         accept="image/*" />
 
                     <button type="button"
-                        class="btn btn-outline-success mb-3 gap-2 d-inline-flex align-items-center text-green-800 hover-bg-success-text-white"
-                        @click="triggerLogoUpload">
+                        class="btn mb-3 gap-2 d-inline-flex align-items-center text-green-800 hover-bg-success-text-white"
+                        :class="{
+                            'btn-outline-success': !isDisabled,
+                            'btn-secondary': isDisabled
+                        }" @click="triggerLogoUpload">
                         <span class="material-icons">upload</span>
                         <span>Add your logo</span>
                     </button>
@@ -37,7 +40,7 @@
                     <div v-if="logo">
                         <span class="file-name">{{ logo_name }}</span>
                         <button type="button" class="btn text-danger border-0 rounded-3 p-2 cursor-pointer mx-auto"
-                            @click="deleteLogo">
+                            @click="deleteLogo" disabled>
                             <i class="fas fa-xmark"></i> </button>
                     </div>
                 </div>
@@ -54,11 +57,11 @@
                         </div>
                         <div class="flex-1">
                             <label for="date">Issue Date: </label>
-                            <input type="date" v-model="issue_date" required />
+                            <input type="date" v-model="issue_date" disabled />
                             <label class="mt-2" for="date">Delivery Date: </label>
-                            <input type="date" v-model="delivery_date" required />
+                            <input type="date" v-model="delivery_date" disabled />
                             <label class="mt-2" for="date">Due Date: </label>
-                            <input type="date" v-model="due_date" required />
+                            <input type="date" v-model="due_date" disabled />
                         </div>
                     </div>
 
@@ -99,7 +102,7 @@
                     <!-- NOTES -->
                     <div class="mt-2">
                         <label for="notes">Notes: <i class="text-xs font-light text-gray-400">(optional*)</i></label>
-                        <textarea placeholder="Enter notes here..." v-model="notes"></textarea>
+                        <textarea placeholder="Enter notes here..." v-model="notes" disabled></textarea>
                     </div>
 
                     <!-- ADD BANK DETAILS -->
@@ -114,17 +117,17 @@
                             <div>
                                 <label for="bank_name">Bank Name:</label>
                                 <input class="mb-2 p-2 w-100%" type="text" v-model="bankDetails.bank_name"
-                                    id="bank_name" placeholder="Enter bank name" />
+                                    id="bank_name" placeholder="Enter bank name" disabled />
                             </div>
                             <div>
                                 <label for="acc_holder">Account Holder Name:</label>
                                 <input class="mb-2 p-2 w-100%" type="text" v-model="bankDetails.acc_holder"
-                                    id="acc_holder" placeholder="Enter account holder name" />
+                                    id="acc_holder" placeholder="Enter account holder name" disabled />
                             </div>
                             <div>
                                 <label for="acc_num">Account Number:</label>
                                 <input class="mb-2 p-2 w-100%" type="text" v-model="bankDetails.acc_num" id="acc_num"
-                                    placeholder="Enter your account number" />
+                                    placeholder="Enter your account number" disabled />
                             </div>
                         </div>
                     </div>
@@ -144,7 +147,7 @@
     </main>
 </template>
 
-<script>
+<script setup>
 import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
@@ -154,106 +157,101 @@ import logoImg from '@/assets/images/kucen.png';
 import InvoiceDetails from './InvoiceDetails.vue';
 import router from '@/router';
 
+const madbookStore = useMADBookStore();
 
-export default {
-    setup() {
-        const madbookStore = useMADBookStore();
+//FORM//
+const reference_number = ref('');
 
-        //FORM//
-        const reference_number = ref('');
+//DISABLED BUTTON
+const isDisabled = ref(true);
 
-        //LOGO
-        const logo = ref(logoImg);
-        const logo_name = ref(null);
-        const logo_input = ref(null);
-        const logo_path = ref(null);
+//LOGO
+const logo = ref(logoImg);
+const logo_name = ref(null);
+const logo_input = ref(null);
+const logo_path = ref(null);
 
-        //INFO
-        const email_from = ref('');
-        const business_address = ref('');
-        const subject = ref('');
+//INFO
+const email_from = ref('');
+const business_address = ref('');
+const subject = ref('');
 
-        //CLIENT DETAILS
-        const c_name = ref('');
-        const c_no = ref('');
-        const c_address = ref('');
+//CLIENT DETAILS
+const c_name = ref('John Doe');
+const c_no = ref('+60123456789');
+const c_address = ref('456 Client Road, \nTown, 12345, \nState');
 
-        //DATES
-        const issue_date = ref('');
-        const delivery_date = ref('');
-        const due_date = ref('');
+//DATES
+const issue_date = ref("2025-01-28");
+const delivery_date = ref("2025-02-28");
+const due_date = ref("2025-02-28");
 
-        //SHIPPING
-        const ship_by = ref('Ninjavan');
-        const ship_fee = ref('10');
+//SHIPPING
+const ship_by = ref('Ninjavan');
+const ship_fee = ref('10');
 
-        //ITEMS
-        const items = reactive([
-            { name: 'Item 1', price: 100, quantity: 2 },
-            { name: "Item 2", price: 50, quantity: 1 },
-        ]);
+//ITEMS
+const items = reactive([
+    { name: 'Item 1', price: 100, quantity: 2 },
+    { name: "Item 2", price: 50, quantity: 1 },
+]);
 
-        const notes = ref('');
-        const previewContent = ref('');
-        const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
-        const totalWithShipping = ref('');
+const notes = ref("Please ensure payment within the validity period.");
+const previewContent = ref('');
+const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
+const totalWithShipping = ref('');
 
-        const generateRandNum = () => {
-            const randomNumber = Math.floor(Math.random() * 10000);
-            reference_number.value = `${randomNumber}`;
-        };
+const generateRandNum = () => {
+    const randomNumber = Math.floor(Math.random() * 10000);
+    reference_number.value = `${randomNumber}`;
+};
 
-        const triggerLogoUpload = () => {
-            logo_input.value.click();
-        };
+const triggerLogoUpload = () => {
+    if (!isDisabled.value) {
+        document.getElementById('logo_upload').click();
+    }
+};
 
-        const handleLogoInput = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                logo_name.value = file.name;
-                const reader = new FileReader();
+const handleLogoInput = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        isDisabled.value = false;
+    }
+};
 
-                reader.onload = (e) => {
-                    logo.value = e.target.result;
-                    updatePreview();
-                };
-                reader.readAsDataURL(file);
-            }
-        };
+const removeItem = (index) => {
+    items.splice(index, 1);
+};
 
-        const removeItem = (index) => {
-            items.splice(index, 1);
-        };
-
-        const generateDocument = () => {
-            try {
-                Swal.fire({
-                    title: "Success",
-                    text: "Invoice successfully created!",
-                    icon: "success",
-                    confirmButtonText: "Home",
-                }).then(() => {
-                    router.push({ name: 'MADBook' });
-                });
-            } catch (error) {
-                console.error("Error saving invoice: ", error);
-                Swal.fire("Error", "Failed to save invoice. Please try again.", "error");
-            }
-        };
-
-        // BANK DETAILS
-        const showForm = ref(false);
-        const bankDetails = ref({
-            bank_name: 'Maybank Malaysia',
-            acc_holder: 'Ali bin Abu',
-            acc_num: '1234567890',
+const generateDocument = () => {
+    try {
+        Swal.fire({
+            title: "Success",
+            text: "Invoice successfully created!",
+            icon: "success",
+            confirmButtonText: "Home",
+        }).then(() => {
+            router.push('/madbook');
         });
-        const toggleForm = () => {
-            showForm.value = !showForm.value;
-        };
+    } catch (error) {
+        console.error("Error saving invoice: ", error);
+        Swal.fire("Error", "Failed to save invoice. Please try again.", "error");
+    }
+};
 
-        const generatePreviewContent = () => {
-            return `
+// BANK DETAILS
+const showForm = ref(false);
+const bankDetails = ref({
+    bank_name: 'Maybank Malaysia',
+    acc_holder: 'Ali bin Abu',
+    acc_num: '1234567890',
+});
+const toggleForm = () => {
+    showForm.value = !showForm.value;
+};
+
+const generatePreviewContent = () => {
+    return `
                <div class="border border-dark rounded p-3">
                     <div class="px-3">
                     <h2 class="mt-4 text-end fw-semibold">Invoice</h2>
@@ -305,8 +303,8 @@ export default {
                         </thead>
                         <tbody class="border-bottom">
                             ${items
-                    .map(
-                        (item, index) => `
+            .map(
+                (item, index) => `
                                         <tr>
                                             <td>${index + 1}</td>
                                             <td class="text-start">${item.name}</td>
@@ -315,8 +313,8 @@ export default {
                                             <td>${(item.price * item.quantity).toFixed(2)}</td>
                                         </tr>
                                     `
-                    )
-                    .join("")}
+            )
+            .join("")}
 
                         </tbody>
                     </table>
@@ -344,78 +342,29 @@ export default {
                 </div>
                 </div>
             `;
-        };
-
-        const updatePreview = () => {
-            previewContent.value = generatePreviewContent();
-        };
-
-        //CALCULATE TOTAL
-        const calculate_total = computed(() => {
-            const total = items.reduce((sum, item) => {
-                return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
-            }, 0);
-
-            const totalWithShipping = total + (parseFloat(ship_fee.value) || 0); // Use .value for ref
-
-            return totalWithShipping.toFixed(2);
-        });
-
-        watchEffect(() => {
-            updatePreview();
-        });
-
-        onMounted(() => {
-            generateRandNum();
-            updatePreview();
-        });
-
-
-        return {
-            subject,
-            reference_number,
-            //logo
-            logo,
-            logo_name,
-            logo_path,
-            logo_input,
-            //info
-            email_from,
-            business_address,
-            //client details
-            c_no,
-            c_name,
-            c_address,
-            //dates
-            due_date,
-            issue_date,
-            delivery_date,
-            //shipping
-            ship_by,
-            ship_fee,
-            //items
-            items,
-
-            notes,
-            previewContent,
-            sanitizedContent,
-
-            //total
-            calculate_total,
-            totalWithShipping,
-
-            //bank details
-            showForm,
-            bankDetails,
-            toggleForm,
-
-            removeItem,
-            updatePreview,
-            handleLogoInput,
-            generateDocument,
-            triggerLogoUpload,
-            generatePreviewContent,
-        };
-    },
 };
+
+const updatePreview = () => {
+    previewContent.value = generatePreviewContent();
+};
+
+//CALCULATE TOTAL
+const calculate_total = computed(() => {
+    const total = items.reduce((sum, item) => {
+        return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
+    }, 0);
+
+    const totalWithShipping = total + (parseFloat(ship_fee.value) || 0); // Use .value for ref
+
+    return totalWithShipping.toFixed(2);
+});
+
+watchEffect(() => {
+    updatePreview();
+});
+
+onMounted(() => {
+    generateRandNum();
+    updatePreview();
+});
 </script>

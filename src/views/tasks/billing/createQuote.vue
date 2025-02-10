@@ -3,9 +3,9 @@
         <!-- TITLE -->
         <div class="bg-white p-3 rounded-md mb-3">
             <h3 class="font-bold mt-2 mb-4 border-b-2 pb-3">Create New Quotation</h3>
-            <div>
-                <label for="subject">Subject: </label>
-                <input type="text" v-model="subject" placeholder="Enter quote subject" />
+            <div class="d-flex gap-2 align-middle items-center">
+                <p class="fw-semibold m-0">Subject: </p>
+                <input class="m-0" type="text" v-model="subject" placeholder="Enter quote subject" />
             </div>
         </div>
 
@@ -127,7 +127,7 @@
     </main>
 </template>
 
-<script>
+<script setup>
 import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
@@ -135,160 +135,157 @@ import Swal from 'sweetalert2';
 import { useMADBookStore } from '@/stores/madbookStore';
 import router from '@/router';
 
+const madbookStore = useMADBookStore();
 
-export default {
-    setup() {
-        const madbookStore = useMADBookStore();
+//FORM DETAILS
+const reference_number = ref('');
+const logo = ref(null);
+const logo_name = ref(null);
+const logo_input = ref(null);
+const logo_path = ref(null);
 
-        //FORM DETAILS
-        const reference_number = ref('');
-        const logo = ref(null);
-        const logo_name = ref(null);
-        const logo_input = ref(null);
-        const logo_path = ref(null);
+const email_from = ref('');
+const business_address = ref('');
+const subject = ref('');
+const c_name = ref('');
+const c_no = ref('');
+const c_address = ref('');
+const issue_date = ref('');
+const valid_date = ref('');
+const items = reactive([{ name: '', price: 0, quantity: 0 }]);
+const notes = ref('');
+const previewContent = ref('');
+const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
 
-        const email_from = ref('');
-        const business_address = ref('');
-        const subject = ref('');
-        const c_name = ref('');
-        const c_no = ref('');
-        const c_address = ref('');
-        const issue_date = ref('');
-        const valid_date = ref('');
-        const items = reactive([{ name: '', price: 0, quantity: 0 }]);
-        const notes = ref('');
-        const previewContent = ref('');
-        const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
+// Generate random number as reference number (eg: Quote No: #randNum)
+const generateRandNum = () => {
+    const randomNumber = Math.floor(Math.random() * 10000);
+    reference_number.value = `${randomNumber}`;
+};
 
-        // Generate random number as reference number (eg: Quote No: #randNum)
-        const generateRandNum = () => {
-            const randomNumber = Math.floor(Math.random() * 10000);
-            reference_number.value = `${randomNumber}`;
+const triggerLogoUpload = () => {
+    logo_input.value.click();
+};
+
+const handleLogoInput = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        logo_name.value = file.name;
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            logo.value = e.target.result;
+            updatePreview();
         };
+        reader.readAsDataURL(file);
+    }
+};
 
-        const triggerLogoUpload = () => {
-            logo_input.value.click();
-        };
+// const deleteLogo = async () => {
+//     try {
+//         await fetch("/api/delete-logo", {
+//             method: "DELETE",
+//         });
 
-        const handleLogoInput = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                logo_name.value = file.name;
-                const reader = new FileReader();
+//         alert("Logo deleted successfully!");
+//         logo.value = null;
+//         logo_name.value = null;
+//         logo_path.value = null;
+//     } catch (error) {
+//         alert("Error deleting logo: ", error);
+//     }
+// };
 
-                reader.onload = (e) => {
-                    logo.value = e.target.result;
-                    updatePreview();
-                };
-                reader.readAsDataURL(file);
-            }
-        };
+const addItem = () => {
+    items.push({ name: "", price: 0, quantity: 0 });
+};
 
-        // const deleteLogo = async () => {
-        //     try {
-        //         await fetch("/api/delete-logo", {
-        //             method: "DELETE",
-        //         });
+const removeItem = (index) => {
+    items.splice(index, 1);
+};
 
-        //         alert("Logo deleted successfully!");
-        //         logo.value = null;
-        //         logo_name.value = null;
-        //         logo_path.value = null;
-        //     } catch (error) {
-        //         alert("Error deleting logo: ", error);
-        //     }
-        // };
+// const saveOrder = async () => {
+//     const orderData = {
+//         items,
+//         total: calculate_total.value,
+//     };
 
-        const addItem = () => {
-            items.push({ name: "", price: 0, quantity: 0 });
-        };
+//     try {
+//         const response = await axios.post('/api/orders', orderData);
+//         Swal.fire({
+//             icon: 'success',
+//             title: 'Success!',
+//             text: 'Order saved successfully!',
+//         });
+//     } catch (error) {
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Oops...',
+//             text: `Error saving order: ${error.message}`,
+//         });
+//     }
+// };
 
-        const removeItem = (index) => {
-            items.splice(index, 1);
-        };
+// const validateForm = () => {
+//     if (!subject.value || !c_name.value || items.value === 0) {
+//         Swal.fire({
+//             icon: "error",
+//             title: "Validation Error",
+//             text: "Please fill in all required fields.",
+//             confirmButtonColor: "#d33",
+//         });
+//         return false;
+//     }
+//     return true;
+// };
 
-        // const saveOrder = async () => {
-        //     const orderData = {
-        //         items,
-        //         total: calculate_total.value,
-        //     };
+// const generateDocument = async () => {
+//     if (validateForm()) {
+//         const quoteData = {
+//             logo: logo.value || null,
+//             email_from: email_from.value.trim(),
+//             business_address: business_address.value.trim(),
+//             subject: subject.value.trim(),
+//             c_name: c_name.value.trim(),
+//             c_no: c_no.value.trim(),
+//             c_address: c_address.value.trim(),
+//             issue_date: issue_date.value.trim(),
+//             valid_date: valid_date.value.trim(),
+//             items: items.length > 0 ? items : [],
+//             total: calculate_total.value || 0,
+//             notes: notes.value.trim() || "",
+//         };
 
-        //     try {
-        //         const response = await axios.post('/api/orders', orderData);
-        //         Swal.fire({
-        //             icon: 'success',
-        //             title: 'Success!',
-        //             text: 'Order saved successfully!',
-        //         });
-        //     } catch (error) {
-        //         Swal.fire({
-        //             icon: 'error',
-        //             title: 'Oops...',
-        //             text: `Error saving order: ${error.message}`,
-        //         });
-        //     }
-        // };
+//         try {
+//             const response = await madbookStore.createQuote(quoteData);
+//             const quoteId = response.data.id;
+//             Swal.fire("Success", "Quotation has been saved to the database!", "success");
+//             router.push(`/Quotation/${quoteId}`)
+//         } catch (error) {
+//             console.error("Error saving quotation: ", error);
+//             Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
+//         }
+//     }
+// };
 
-        // const validateForm = () => {
-        //     if (!subject.value || !c_name.value || items.value === 0) {
-        //         Swal.fire({
-        //             icon: "error",
-        //             title: "Validation Error",
-        //             text: "Please fill in all required fields.",
-        //             confirmButtonColor: "#d33",
-        //         });
-        //         return false;
-        //     }
-        //     return true;
-        // };
+const generateDocument = () => {
+    try {
+        Swal.fire({
+            title: "Success",
+            text: "Quotation successfully created!",
+            icon: "success",
+            confirmButtonText: "Back",
+        }).then(() => {
+            router.push({ name: 'MADBook' });
+        });
+    } catch (error) {
+        console.error("Error saving quotation: ", error);
+        Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
+    }
+};
 
-        // const generateDocument = async () => {
-        //     if (validateForm()) {
-        //         const quoteData = {
-        //             logo: logo.value || null,
-        //             email_from: email_from.value.trim(),
-        //             business_address: business_address.value.trim(),
-        //             subject: subject.value.trim(),
-        //             c_name: c_name.value.trim(),
-        //             c_no: c_no.value.trim(),
-        //             c_address: c_address.value.trim(),
-        //             issue_date: issue_date.value.trim(),
-        //             valid_date: valid_date.value.trim(),
-        //             items: items.length > 0 ? items : [],
-        //             total: calculate_total.value || 0,
-        //             notes: notes.value.trim() || "",
-        //         };
-
-        //         try {
-        //             const response = await madbookStore.createQuote(quoteData);
-        //             const quoteId = response.data.id;
-        //             Swal.fire("Success", "Quotation has been saved to the database!", "success");
-        //             router.push(`/Quotation/${quoteId}`)
-        //         } catch (error) {
-        //             console.error("Error saving quotation: ", error);
-        //             Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
-        //         }
-        //     }
-        // };
-
-        const generateDocument = () => {
-            try {
-                Swal.fire({
-                    title: "Success",
-                    text: "Quotation successfully created!",
-                    icon: "success",
-                    confirmButtonText: "Back",
-                }).then(() => {
-                    window.history.back();
-                });
-            } catch (error) {
-                console.error("Error saving quotation: ", error);
-                Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
-            }
-        };
-
-        const generatePreviewContent = () => {
-            return `
+const generatePreviewContent = () => {
+    return `
                 <div class="border border-dark rounded p-3">
                     <div class="px-3">
                     <h2 class="mt-4 text-end fw-semibold">Quote</h2>
@@ -337,8 +334,8 @@ export default {
                         </thead>
                         <tbody class="border-bottom">
                             ${items
-                    .map(
-                        (item, index) => `
+            .map(
+                (item, index) => `
                                         <tr>
                                             <td>${index + 1}</td>
                                             <td class="text-start">${item.name}</td>
@@ -347,8 +344,8 @@ export default {
                                             <td>${(item.price * item.quantity).toFixed(2)}</td>
                                         </tr>
                                     `
-                    )
-                    .join("")}
+            )
+            .join("")}
 
                         </tbody>
                     </table>
@@ -361,52 +358,22 @@ export default {
                     </div>
                 </div>
             `;
-        };
-
-        const updatePreview = () => {
-            previewContent.value = generatePreviewContent();
-        };
-
-        const calculate_total = computed(() => {
-            return items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
-        });
-
-        watchEffect(() => {
-            updatePreview();
-        });
-
-        onMounted(() => {
-            generateRandNum();
-            updatePreview();
-        });
-
-
-        return {
-            reference_number,
-            logo,
-            logo_name,
-            logo_path,
-            logo_input,
-            email_from,
-            business_address,
-            subject,
-            c_name,
-            c_no,
-            c_address,
-            issue_date,
-            valid_date,
-            items,
-            notes,
-            previewContent,
-            sanitizedContent,
-            calculate_total,
-            generateDocument,
-            addItem,
-            removeItem,
-            triggerLogoUpload,
-            handleLogoInput,
-            generatePreviewContent,
-        };
-    },
 };
+
+const updatePreview = () => {
+    previewContent.value = generatePreviewContent();
+};
+
+const calculate_total = computed(() => {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
+});
+
+watchEffect(() => {
+    updatePreview();
+});
+
+onMounted(() => {
+    generateRandNum();
+    updatePreview();
+});
 </script>

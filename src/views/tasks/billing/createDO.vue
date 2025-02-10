@@ -29,8 +29,11 @@
                         accept="image/*" />
 
                     <button type="button"
-                        class="btn btn-outline-success mb-3 gap-2 d-inline-flex align-items-center text-green-800 hover-bg-success-text-white"
-                        @click="triggerLogoUpload">
+                        class="btn mb-3 gap-2 d-inline-flex align-items-center text-green-800 hover-bg-success-text-white"
+                        :class="{
+                            'btn-outline-success': !isDisabled,
+                            'btn-secondary': isDisabled
+                        }" @click="triggerLogoUpload">
                         <span class="material-icons">upload</span>
                         <span>Add your logo</span>
                     </button>
@@ -38,7 +41,7 @@
                     <div v-if="logo">
                         <span class="file-name">{{ logo_name }}</span>
                         <button type="button" class="btn text-danger border-0 rounded-3 p-2 cursor-pointer mx-auto"
-                            @click="deleteLogo">
+                            @click="deleteLogo" disabled>
                             <i class="fas fa-xmark"></i> </button>
                     </div>
                 </div>
@@ -71,7 +74,7 @@
                                 <th>Items</th>
                                 <th>Price</th>
                                 <th>Quantity</th>
-                                <th>Total</th>
+                                <th>Amount</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -152,127 +155,122 @@
     </main>
 </template>
 
-<script>
+<script setup>
 import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useMADBookStore } from '@/stores/madbookStore';
-import router from '@/router';
+import logoImg from '/src/assets/images/kucen.png';
 
+const madbookStore = useMADBookStore();
 
-export default {
-    setup() {
-        const madbookStore = useMADBookStore();
+//FORM//
+const reference_number = ref('');
 
-        //FORM//
-        const reference_number = ref('');
+//DISABLED BUTTON
+const isDisabled = ref(true);
 
-        //LOGO
-        const logo = ref(null);
-        const logo_name = ref(null);
-        const logo_input = ref(null);
-        const logo_path = ref(null);
+//LOGO
+const logo = ref(logoImg);
+const logo_name = ref(null);
+const logo_input = ref(null);
+const logo_path = ref(null);
 
-        //INFO
-        const email_from = ref('');
-        const business_address = ref('');
-        const subject = ref('');
+//INFO
+const email_from = ref('');
+const business_address = ref('');
+const subject = ref('');
 
-        //CLIENT DETAILS
-        const c_name = ref('');
-        const c_no = ref('');
-        const c_address = ref('');
+//CLIENT DETAILS
+const c_name = ref('');
+const c_no = ref('');
+const c_address = ref('');
 
-        //DATES
-        const issue_date = ref('');
-        const delivery_date = ref('');
-        const due_date = ref('');
+//DATES
+const issue_date = ref('');
+const delivery_date = ref('');
+const due_date = ref('');
 
-        //SHIPPING
-        const ship_by = ref('');
-        const ship_fee = ref(0);
+//SHIPPING
+const ship_by = ref('');
+const ship_fee = ref(0);
 
-        //ITEMS
-        const items = reactive([
-            { name: 'Item 1', price: 100, quantity: 2 },
-            { name: "Item 2", price: 50, quantity: 1 },
-        ]);
+//ITEMS
+const items = reactive([
+    { name: 'Item 1', price: 100, quantity: 2 },
+    { name: "Item 2", price: 50, quantity: 1 },
+]);
 
-        const notes = ref('');
-        const previewContent = ref('');
-        const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
-        const totalWithShipping = ref('');
+const notes = ref('');
+const previewContent = ref('');
+const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
+const totalWithShipping = ref('');
 
-        const generateRandNum = () => {
-            const randomNumber = Math.floor(Math.random() * 10000);
-            reference_number.value = `${randomNumber}`;
-        };
+const generateRandNum = () => {
+    const randomNumber = Math.floor(Math.random() * 10000);
+    reference_number.value = `${randomNumber}`;
+};
 
-        const triggerLogoUpload = () => {
-            logo_input.value.click();
-        };
+const triggerLogoUpload = () => {
+    if (!isDisabled.value) {
+        document.getElementById('logo_upload').click();
+    }
+};
 
-        const handleLogoInput = (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                logo_name.value = file.name;
-                const reader = new FileReader();
+const handleLogoInput = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        isDisabled.value = false;
+    }
+};
 
-                reader.onload = (e) => {
-                    logo.value = e.target.result;
-                    updatePreview();
-                };
-                reader.readAsDataURL(file);
-            }
-        };
+const removeItem = (index) => {
+    items.splice(index, 1);
+};
 
-        const removeItem = (index) => {
-            items.splice(index, 1);
-        };
-
-        const generateDocument = () => {
-            try {
-                Swal.fire({
-                    title: "Success",
-                    text: "Delivery order successfully created!",
-                    icon: "success",
-                    confirmButtonText: "Back",
-                }).then(() => {
-                    window.history.back();
-                });
-            } catch (error) {
-                console.error("Error saving delivery order: ", error);
-                Swal.fire("Error", "Failed to save delivery order. Please try again.", "error");
-            }
-        };
-
-        // BANK DETAILS
-        const showForm = ref(false);
-        const saveToDB = ref(false);
-        const bankDetails = ref({
-            bank_name: '',
-            acc_holder: '',
-            acc_num: '',
+const generateDocument = () => {
+    try {
+        Swal.fire({
+            title: "Success",
+            text: "Delivery order successfully created!",
+            icon: "success",
+            confirmButtonText: "Back",
+        }).then(() => {
+            window.history.back();
         });
-        const toggleForm = () => {
-            showForm.value = !showForm.value;
-        };
-        //save to pinia
-        const saveBankDetails = () => {
-            madbookStore.setBankDetails(bankDetails.value);
-            madbookStore.setSaveToDB(saveToDB.value);
+    } catch (error) {
+        console.error("Error saving delivery order: ", error);
+        Swal.fire("Error", "Failed to save delivery order. Please try again.", "error");
+    }
+};
 
-            if (saveToDB.value) {
-                //add logic here to save to database
-                Swal.fire('Save', 'Save to database', 'success');
-            }
+// BANK DETAILS
+const showForm = ref(false);
+const saveToDB = ref(false);
+const bankDetails = ref({
+    bank_name: '',
+    acc_holder: '',
+    acc_num: '',
+});
+const toggleForm = () => {
+    showForm.value = !showForm.value;
+};
+//save to pinia
+const saveBankDetails = () => {
+    madbookStore.setBankDetails(bankDetails.value);
+    madbookStore.setSaveToDB(saveToDB.value);
 
-            showForm.value = false; //hide the form after saving
-        };
+    if (saveToDB.value) {
+        //add logic here to save to database
+        Swal.fire('Save', 'Save to database', 'success');
+    }
 
-        const generatePreviewContent = () => {
-            return `
+    showForm.value = false; //hide the form after saving
+};
+
+const generatePreviewContent = () => {
+    return `
                 <div class="border border-dark rounded p-3">
                     <div class="px-3">
                     <h2 class="mt-4 text-end fw-semibold">Delivery Order</h2>
@@ -295,7 +293,7 @@ export default {
                             <p class="mb-1 fs-7 whitespace-pre">${c_address.value}</p>
                         </div>
 
-                        <div class=" d-flex gap-4 justify-end">
+                        <div class=" d-flex gap-2 justify-end">
                             <div class="text-end">
                                 <p class="mb-1"><strong>DO No: </strong></p>
                                 <p class="mb-1"><strong>Issue Date: </strong></p>
@@ -320,15 +318,15 @@ export default {
                         </thead>
                         <tbody class="border-bottom">
                             ${items
-                    .map(
-                        (item, index) => `
+            .map(
+                (item, index) => `
                                         <tr>
                                             <td class="text-start">${item.name}</td>
                                             <td class="w-10 text-center">${item.quantity}</td>
                                         </tr>
                                     `
-                    )
-                    .join("")}
+            )
+            .join("")}
 
                         </tbody>
                     </table>
@@ -355,80 +353,29 @@ export default {
                 </div>
                 </div>
             `;
-        };
-
-        const updatePreview = () => {
-            previewContent.value = generatePreviewContent();
-        };
-
-        //CALCULATE TOTAL
-        const calculate_total = computed(() => {
-            const total = items.reduce((sum, item) => {
-                return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
-            }, 0);
-
-            const totalWithShipping = total + (parseFloat(ship_fee.value) || 0); // Use .value for ref
-
-            return totalWithShipping.toFixed(2);
-        });
-
-        watchEffect(() => {
-            updatePreview();
-        });
-
-        onMounted(() => {
-            generateRandNum();
-            updatePreview();
-        });
-
-
-        return {
-            subject,
-            reference_number,
-            //logo
-            logo,
-            logo_name,
-            logo_path,
-            logo_input,
-            //info
-            email_from,
-            business_address,
-            //client details
-            c_no,
-            c_name,
-            c_address,
-            //dates
-            due_date,
-            issue_date,
-            delivery_date,
-            //shipping
-            ship_by,
-            ship_fee,
-            //items
-            items,
-
-            notes,
-            previewContent,
-            sanitizedContent,
-
-            //total
-            calculate_total,
-            totalWithShipping,
-
-            //bank details
-            showForm,
-            saveToDB,
-            bankDetails,
-            toggleForm,
-            saveBankDetails,
-
-            removeItem,
-            updatePreview,
-            handleLogoInput,
-            generateDocument,
-            triggerLogoUpload,
-            generatePreviewContent,
-        };
-    },
 };
+
+const updatePreview = () => {
+    previewContent.value = generatePreviewContent();
+};
+
+//CALCULATE TOTAL
+const calculate_total = computed(() => {
+    const total = items.reduce((sum, item) => {
+        return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
+    }, 0);
+
+    const totalWithShipping = total + (parseFloat(ship_fee.value) || 0); // Use .value for ref
+
+    return totalWithShipping.toFixed(2);
+});
+
+watchEffect(() => {
+    updatePreview();
+});
+
+onMounted(() => {
+    generateRandNum();
+    updatePreview();
+});
 </script>
