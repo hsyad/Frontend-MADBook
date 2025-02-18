@@ -59,17 +59,17 @@
                         <tr v-for="(quote, index) in quotes" :key="quote.id" class="cursor-pointer"
                             @click="viewQuoteDetails(quote)">
                             <td class="border border-gray-300 px-4 py-2">{{ index + 1 }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ "#00"+quote.id }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ "#00" + quote.id }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.c_name }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.subject }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ quote.total }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ quote.q_total }}</td>
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
                                     class="d-flex bg-gray-300 rounded-full w-full h-7 p-1 text-white font-semibold justify-center"
-                                    :class="statusButton" @click="showConfirmationPopup">
-                                    {{ isConfirmed ? "Confirm" : "Confirm" }}</button>
+                                    :class="confirmStatus">
+                                    Confirm</button>
                             </td>
-                            <td class="border border-gray-300 px-4 py-2">{{ quote.created_at }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ quote.issue_date }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -91,44 +91,45 @@
                             <th class="border border-gray-300 text-center">Created At</th>
                         </tr>
                     </thead>
-                    <tbody> 
-                        <tr v-for="(inv, index) in invoices" :key="inv.id">
+                    <tbody>
+                        <tr v-for="(invoice, index) in invoices" :key="invoice.id" @click="viewInvoiceDetails()">
                             <td class="border border-gray-300 px-4 py-2">{{ index + 1 }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ "#00"+inv.id }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ inv.quotations.c_name }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ inv.quotations.subject }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ inv.total }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ "#00" + invoice.id }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.c_name }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.subject }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.i_total }}</td>
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
                                     class="d-flex bg-gray-300 rounded-full w-full h-7 p-1 text-white font-semibold justify-center"
-                                    :class="getPaymentStatus(inv.status)" @click="toggleBilling(inv)">
-                                    {{ inv.status }}</button>
+                                    :class="getPaymentStatus(invoice.status)" @click="toggleBilling(invoice)">
+                                    {{ invoice.status }}
+                                </button>
                             </td>
-                            <td class="border border-gray-300 px-4 py-2">{{ inv.created_at }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.issue_date }}</td>
                         </tr>
+
+
                     </tbody>
                 </table>
             </div>
-            <div v-else>
-                <p>Loading...</p>
-            </div>
-
         </div>
     </div>
 </template>
 
 <script setup>
 import { useMADBookStore } from '@/stores/madbookStore';
-import { onMounted, reactive, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import  axios from 'axios';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import axios from 'axios';
 
-onMounted(()=>
-            fetchQuote(),
-)
+onMounted(() => {
+    fetchQuote(2);
+    fetchInvoice(2);
+});
 
-const quotes = ref()
-const invoices = ref()
+const quotes = ref([])
+const invoices = ref([])
+const borrowerId = 2;
 
 const madbookStore = useMADBookStore();
 const router = useRouter();
@@ -144,6 +145,15 @@ const currentTab = ref("quotation");
 const addQuote = () => {
     router.push('/create-quotation');
 };
+
+const confirmStatus = computed(() => {
+    return (quote) => {
+        if (quote.delivery_order && quote.invoice) {
+            return "bg-green-500";
+        }
+        return "bg-gray-300";
+    };
+});
 
 const toggleBilling = (inv) => {
     const statuses = ["Pending", "Paid", "Past Due"];
@@ -161,36 +171,42 @@ const getPaymentStatus = (status) => {
 };
 
 const viewQuoteDetails = (quote) => {
-    router.push(`/quotation/${quote.Id}`);
+    router.push(`/quotation/${quote.id}`);
 };
 
-const fetchQuote = async() => {
+const viewInvoiceDetails = (invoice) => {
+    router.push(`/invoice/${invoice.id}`);
+};
+
+const fetchQuote = async (borrowerId) => {
     try {
-            const response = await axios.get('http://quotation.test/api/Quotation/'+3);
-            quotes.value = response.data.quotations
-        } catch (error) {
-            console.error("Error fetching quotations:", error);
-        }
+        const response = await axios.get(`http://quotation.test/api/Borrower/${borrowerId}/Quotation`);
+        quotes.value = response.data.quotations;
+
+        await fetchInvoice(borrowerId);
+    } catch (error) {
+        console.error("Error fetching quotations:", error);
+    }
 }
-const fetchDO = async() => {
+const fetchDO = async () => {
 
 }
-const fetchInvoice = async() => {
+const fetchInvoice = async (borrowerId) => {
     try {
-                const response = await axios.get('http://quotation.test/api/Invoice/'+3);
-                invoices.value = response.data;
-                console.log(invoices.value)
-            } catch (error) {
-                console.error("Error fetching invoices:", error);
-            }
+        const response = await axios.get(`http://quotation.test/api/All/Invoices/${borrowerId}`);
+        invoices.value = response.data;
+        console.log("Filtered Invoices:", invoices.value);
+    } catch (error) {
+        console.error("Error fetching invoices:", error);
+    }
 }
-const createQuote = async() => {
+const createQuote = async () => {
 
 }
-const createDO = async() => {
+const createDO = async () => {
 
 }
-const createInvoice = async() => {
+const createInvoice = async () => {
 
 }
 </script>

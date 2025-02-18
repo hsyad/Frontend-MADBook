@@ -132,12 +132,9 @@ import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useMADBookStore } from '@/stores/madbookStore';
 import router from '@/router';
 
-const madbookStore = useMADBookStore();
-
-//FORM DETAILS
+// FORM DETAILS
 const reference_number = ref('');
 const logo = ref(null);
 const logo_name = ref(null);
@@ -181,193 +178,149 @@ const handleLogoInput = (event) => {
     }
 };
 
-// const deleteLogo = async () => {
-//     try {
-//         await fetch("/api/delete-logo", {
-//             method: "DELETE",
-//         });
-
-//         alert("Logo deleted successfully!");
-//         logo.value = null;
-//         logo_name.value = null;
-//         logo_path.value = null;
-//     } catch (error) {
-//         alert("Error deleting logo: ", error);
-//     }
-// };
-
+// Add a new item to the quotation
 const addItem = () => {
     items.push({ name: "", price: 0, quantity: 0 });
 };
 
+// Remove an item from the quotation
 const removeItem = (index) => {
     items.splice(index, 1);
 };
 
-// const saveOrder = async () => {
-//     const orderData = {
-//         items,
-//         total: calculate_total.value,
-//     };
+// Calculate the total of the items in the quotation
+const calculate_total = computed(() => {
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
+});
 
-//     try {
-//         const response = await axios.post('/api/orders', orderData);
-//         Swal.fire({
-//             icon: 'success',
-//             title: 'Success!',
-//             text: 'Order saved successfully!',
-//         });
-//     } catch (error) {
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Oops...',
-//             text: `Error saving order: ${error.message}`,
-//         });
-//     }
-// };
-
-// const validateForm = () => {
-//     if (!subject.value || !c_name.value || items.value === 0) {
-//         Swal.fire({
-//             icon: "error",
-//             title: "Validation Error",
-//             text: "Please fill in all required fields.",
-//             confirmButtonColor: "#d33",
-//         });
-//         return false;
-//     }
-//     return true;
-// };
-
-// const generateDocument = async () => {
-//     if (validateForm()) {
-//         const quoteData = {
-//             logo: logo.value || null,
-//             email_from: email_from.value.trim(),
-//             business_address: business_address.value.trim(),
-//             subject: subject.value.trim(),
-//             c_name: c_name.value.trim(),
-//             c_no: c_no.value.trim(),
-//             c_address: c_address.value.trim(),
-//             issue_date: issue_date.value.trim(),
-//             valid_date: valid_date.value.trim(),
-//             items: items.length > 0 ? items : [],
-//             total: calculate_total.value || 0,
-//             notes: notes.value.trim() || "",
-//         };
-
-//         try {
-//             const response = await madbookStore.createQuote(quoteData);
-//             const quoteId = response.data.id;
-//             Swal.fire("Success", "Quotation has been saved to the database!", "success");
-//             router.push(`/Quotation/${quoteId}`)
-//         } catch (error) {
-//             console.error("Error saving quotation: ", error);
-//             Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
-//         }
-//     }
-// };
-
-const generateDocument = () => {
-    try {
-        Swal.fire({
-            title: "Success",
-            text: "Quotation successfully created!",
-            icon: "success",
-            confirmButtonText: "Back",
-        }).then(() => {
-            router.push({ name: 'MADBook' });
-        });
-    } catch (error) {
-        console.error("Error saving quotation: ", error);
-        Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
-    }
-};
-
+// Generate the content for previewing the quotation
 const generatePreviewContent = () => {
     return `
-                <div class="border border-dark rounded p-3">
-                    <div class="px-3">
-                    <h2 class="mt-4 text-end fw-semibold">Quote</h2>
+    <div class="border border-dark rounded p-3">
+      <div class="px-3">
+        <h2 class="mt-4 text-end fw-semibold">Quote</h2>
 
-                    <div class="d-flex justify-flex-start items-center my-4">
-                        ${logo.value ? `
-                        <div class="d-inline-block overflow-hidden h-20">
-                            <img src="${logo.value}" alt="logo" class="h-100 object-contain">
-                        </div>
-                        ` : ""}
-                    </div>
+        <div class="d-flex justify-flex-start items-center my-4">
+          ${logo.value ? `
+            <div class="d-inline-block overflow-hidden h-20">
+              <img src="${logo.value}" alt="logo" class="h-100 object-contain">
+            </div>
+          ` : ""}
+        </div>
 
-                    <p class="text-secondary small">${business_address.value} | ${email_from.value}</p>
+        <p class="text-secondary small">${business_address.value} | ${email_from.value}</p>
 
-                    <div class="d-flex justify-between my-4">
-                        <div div class="text-start flex-grow-1">
-                            <p class="mb-1"><strong>For:</strong></p>
-                            <p class="mb-1 fs-7">${c_name.value}</p>
-                            <p class="mb-1 fs-7">${c_no.value}</p>
-                            <p class="mb-1 fs-7 whitespace-pre">${c_address.value}</p>
-                        </div>
+        <div class="d-flex justify-between my-4">
+          <div class="text-start flex-grow-1">
+            <p class="mb-1"><strong>For:</strong></p>
+            <p class="mb-1 fs-7">${c_name.value}</p>
+            <p class="mb-1 fs-7">${c_no.value}</p>
+            <p class="mb-1 fs-7 whitespace-pre">${c_address.value}</p>
+          </div>
 
-                        <div class="d-flex gap-2 justify-end">
-                            <div class="text-end">
-                                <p class="mb-1"><strong>Invoice No: </strong></p>
-                                <p class="mb-1"><strong>Issue Date: </strong></p>
-                                <p class="mb-1"><strong>Valid Until: </strong></p>
-                            </div>
-                            <div class="text-start">
-                                <p class="mb-1">${reference_number.value}</p>
-                                <p class="mb-1">${issue_date.value}</p>
-                                <p class="mb-1">${valid_date.value}</p>
-                            </div>
-                        </div>
-                    </div>
+          <div class="d-flex gap-2 justify-end">
+            <div class="text-end">
+              <p class="mb-1"><strong>Invoice No: </strong></p>
+              <p class="mb-1"><strong>Issue Date: </strong></p>
+              <p class="mb-1"><strong>Valid Until: </strong></p>
+            </div>
+            <div class="text-start">
+              <p class="mb-1">${reference_number.value}</p>
+              <p class="mb-1">${issue_date.value}</p>
+              <p class="mb-1">${valid_date.value}</p>
+            </div>
+          </div>
+        </div>
 
-                    <table class="table table-borderless shadow-none">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th class="w-14">No.</th>
-                                <th class="w-auto text-start">Items</th>
-                                <th class="w-20">Price</th>
-                                <th class="w-25">Quantity</th>
-                                <th class="w-20">Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody class="border-bottom">
-                            ${items
-            .map(
-                (item, index) => `
-                                        <tr>
-                                            <td>${index + 1}</td>
-                                            <td class="text-start">${item.name}</td>
-                                            <td>${item.price}</td>
-                                            <td>${item.quantity}</td>
-                                            <td>${(item.price * item.quantity).toFixed(2)}</td>
-                                        </tr>
-                                    `
-            )
-            .join("")}
+        <table class="table table-borderless shadow-none">
+          <thead class="table-secondary">
+            <tr>
+              <th class="w-14">No.</th>
+              <th class="w-auto text-start">Items</th>
+              <th class="w-20">Price</th>
+              <th class="w-25">Quantity</th>
+              <th class="w-20">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="border-bottom">
+            ${items.map((item, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td class="text-start">${item.name}</td>
+                <td>${item.price}</td>
+                <td>${item.quantity}</td>
+                <td>${(item.price * item.quantity).toFixed(2)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
 
-                        </tbody>
-                    </table>
-
-                        <p class="mt-5"><strong>Notes:</strong> ${notes.value}</p>
-                        <div class="d-flex gap-3 justify-end m-1 text-lg">
-                                <p class="fw-semibold">Total: </p>
-                                <p class="fw-semibold">RM${calculate_total.value}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
+        <p class="mt-5"><strong>Notes:</strong> ${notes.value}</p>
+        <div class="d-flex gap-3 justify-end m-1 text-lg">
+          <p class="fw-semibold">Total: </p>
+          <p class="fw-semibold">RM${calculate_total.value}</p>
+        </div>
+      </div>
+    </div>
+  `;
 };
 
 const updatePreview = () => {
     previewContent.value = generatePreviewContent();
 };
 
-const calculate_total = computed(() => {
-    return items.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2);
-});
+// Save quote data without using madbookStore
+const saveQuoteToDatabase = async (quoteData) => {
+    try {
+        // Simulate saving the quote data to a database
+        const response = await axios.post('http://quotation.test/api/Quotation/Store', quoteData); // Adjust URL to match your backend
+        const quoteId = response.data.id;
+        console.log(response.data);
+        Swal.fire("Success", "Quotation has been saved to the database!", "success");
+        router.push(`/Quotation/${quoteId}`);
+    } catch (error) {
+        console.error("Error saving quotation: ", error);
+        Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
+    }
+};
 
+// Validate form inputs
+const validateForm = () => {
+    if (!subject.value || !c_name.value || items.length === 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Validation Error",
+            text: "Please fill in all required fields.",
+            confirmButtonColor: "#d33",
+        });
+        return false;
+    }
+    return true;
+};
+
+// Handle document generation
+const generateDocument = () => {
+    if (validateForm()) {
+        const quoteData = {
+            logo: logo.value || null,
+            email_from: email_from.value.trim(),
+            business_address: business_address.value.trim(),
+            subject: subject.value.trim(),
+            c_name: c_name.value.trim(),
+            c_no: c_no.value.trim(),
+            c_address: c_address.value.trim(),
+            issue_date: issue_date.value.trim(),
+            valid_date: valid_date.value.trim(),
+            items: items.length > 0 ? items : [],
+            total: calculate_total.value || 0,
+            notes: notes.value.trim() || "",
+        };
+
+        saveQuoteToDatabase(quoteData);
+    }
+};
+
+// Update preview when any field changes
 watchEffect(() => {
     updatePreview();
 });
