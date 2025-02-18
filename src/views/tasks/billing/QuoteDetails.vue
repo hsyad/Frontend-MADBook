@@ -148,9 +148,18 @@ const quoteId = defineProps({
 const fetchQuoteDetails = async () => {
     try {
         const response = await axios.get(`http://quotation.test/api/Quotation/`+quoteId.id );
-        doId.value = response.data.q_delivery_orders.id
-        InvoiceId.value = response.data.q_invoices.id
-        
+        const { q_delivery_orders, q_invoices} = response.data
+
+        if(q_delivery_orders != null)
+            doId.value = q_delivery_orders.id
+        else
+            doId.value = 'nonexistent'
+
+        if(q_invoices != null)
+            InvoiceId.value = q_invoices.id
+        else
+            InvoiceId.value = 'nonexistent'
+
         if (response.data) {
             quote.value = response.data;
             items.value = response.data.q_items || [];
