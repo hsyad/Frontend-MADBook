@@ -56,7 +56,7 @@
         </div>
         <!-- CREATE QUOTE -->
         <div class="sidebar-links">
-            <router-link class="button" to="/create-quotation">
+            <router-link class="button" to="/create-quotation/2"> Warning! (ID) is hard coded
                 <span class="material-icons">filter_2</span>
                 <span class="text">Create Quote</span>
             </router-link>

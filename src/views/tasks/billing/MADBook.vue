@@ -18,7 +18,7 @@
                     <li class="nav-item">
                         <button class="nav-link"
                             :class="{ active: currentTab === 'invoice', 'text-muted': currentTab !== 'invoice' }"
-                            @click="currentTab = 'invoice', fetchInvoice()" :style="{
+                            @click="currentTab = 'invoice', fetchInvoice(borrowerId)" :style="{
                                 backgroundColor: currentTab === 'invoice' ? '#198754' : '',
                                 color: currentTab === 'invoice' ? 'white' : '',
                                 border: currentTab === 'invoice' ? 'none' : '',
@@ -30,10 +30,11 @@
             </div>
 
             <!-- ADD NEW QUOTATION -->
-            <button class="btn btn-success rounded-md text-white font-bold w-40" v-if="currentTab === 'quotation'"
-                @click="addQuote">
-                Add Quotation
-            </button>
+             <RouterLink :to="{name: 'CreateQuotation',params: {id: String(borrowerId)}}" 
+                            class="btn btn-success rounded-md text-white font-bold w-40" 
+                            v-if="currentTab === 'quotation'" > 
+                            Add Quotation
+            </RouterLink>
         </div>
 
         <!-- CONTENT AREA -->
@@ -95,8 +96,8 @@
                         <tr v-for="(invoice, index) in invoices" :key="invoice.id" @click="viewInvoiceDetails()">
                             <td class="border border-gray-300 px-4 py-2">{{ index + 1 }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ "#00" + invoice.id }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ invoice.c_name }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ invoice.subject }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.quotations.c_name }}</td>
+                            <td class="border border-gray-300 px-4 py-2">{{ invoice.quotations.subject }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.i_total }}</td>
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
@@ -123,8 +124,7 @@ import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 onMounted(() => {
-    fetchQuote(2);
-    fetchInvoice(2);
+    fetchQuote(borrowerId);
 });
 
 const quotes = ref([])
@@ -141,10 +141,6 @@ const router = useRouter();
 
 const statusButton = ref("Pending");
 const currentTab = ref("quotation");
-
-const addQuote = () => {
-    router.push('/create-quotation');
-};
 
 const confirmStatus = computed(() => {
     return (quote) => {
@@ -195,7 +191,6 @@ const fetchInvoice = async (borrowerId) => {
     try {
         const response = await axios.get(`http://quotation.test/api/All/Invoices/${borrowerId}`);
         invoices.value = response.data;
-        console.log("Filtered Invoices:", invoices.value);
     } catch (error) {
         console.error("Error fetching invoices:", error);
     }

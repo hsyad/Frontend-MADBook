@@ -51,7 +51,7 @@
                             <div class="text-start">
                                 <div class="d-flex gap-3">
                                     <p><strong>Quote No: </strong> </p>
-                                    <p>{{ quoteId }}</p>
+                                    <p>{{ "#MAD00"+quoteId.id }}</p>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <p><strong>Issue Date: </strong> </p>
@@ -131,14 +131,19 @@ const items = ref([]);
 const devOr = ref({});
 const inv = ref({});
 const showEditModal = ref(false);
-const quoteId = route.params.id;
+const quoteId = defineProps({
+    id:{
+        required: true,
+        type: String
+    }
+})
 
 //Fetch quotation details
 const fetchQuoteDetails = async () => {
     try {
-        console.log("Fetching quotation for ID: ", quoteId);
+        console.log("Fetching quotation for ID: ", quoteId.id);
 
-        const response = await axios.get(`http://quotation.test/api/Quotation/${quoteId}`);
+        const response = await axios.get(`http://quotation.test/api/Quotation/`+quoteId.id );
 
         if (response.data) {
             quote.value = response.data;
