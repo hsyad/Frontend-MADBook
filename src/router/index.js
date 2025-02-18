@@ -45,14 +45,16 @@ const router = createRouter({
             component: MADBook,
         },
         {
-            path: '/create-quotation',
+            path: '/create-quotation/:id',
             name: 'CreateQuotation',
             component: CreateQuote,
+            props: true,
         },
         {
             path: '/quotation/:id',
             name: 'QuotationDetails',
             component: QuoteDetails,
+            props: true
         },
         {
             path: '/create-delivery-order',

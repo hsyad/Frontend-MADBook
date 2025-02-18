@@ -48,8 +48,8 @@
                     <div class="d-flex gap-2 align-baseline">
                         <div class="flex-1">
                             <label for="name">From:</label>
-                            <input type="text" v-model="email_from" placeholder="Enter your email" required />
-                            <textarea v-model="business_address" placeholder="Enter your business address" required />
+                            <input type="text" v-model="email" placeholder="Enter your email" required />
+                            <textarea v-model="address" placeholder="Enter your business address" required />
                         </div>
 
                         <div class="flex-1">
@@ -134,23 +134,31 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import router from '@/router';
 
+const borrower_id = defineProps({
+    id:{
+        required: true,
+    }
+})
 // FORM DETAILS
-const reference_number = ref('');
+const subject = ref('Subject');
+
 const logo = ref(null);
 const logo_name = ref(null);
 const logo_input = ref(null);
 const logo_path = ref(null);
 
-const email_from = ref('');
-const business_address = ref('');
-const subject = ref('');
-const c_name = ref('');
-const c_no = ref('');
-const c_address = ref('');
 const issue_date = ref('');
 const valid_date = ref('');
+const c_name = ref('Wapik');
+const c_address = ref('123');
+const c_no = ref('01333333');
+const email = ref('wapik@gmail.com');
+const address = ref('123');
 const items = reactive([{ name: '', price: 0, quantity: 0 }]);
 const notes = ref('');
+
+const reference_number = ref('');
+
 const previewContent = ref('');
 const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
 
@@ -208,7 +216,7 @@ const generatePreviewContent = () => {
           ` : ""}
         </div>
 
-        <p class="text-secondary small">${business_address.value} | ${email_from.value}</p>
+        <p class="text-secondary small">${address.value} | ${email.value}</p>
 
         <div class="d-flex justify-between my-4">
           <div class="text-start flex-grow-1">
@@ -274,8 +282,7 @@ const saveQuoteToDatabase = async (quoteData) => {
     try {
         // Simulate saving the quote data to a database
         const response = await axios.post('http://quotation.test/api/Quotation/Store', quoteData); // Adjust URL to match your backend
-        const quoteId = response.data.id;
-        console.log(response.data);
+        const quoteId = response.data.quotation.id;
         Swal.fire("Success", "Quotation has been saved to the database!", "success");
         router.push(`/Quotation/${quoteId}`);
     } catch (error) {
@@ -303,8 +310,8 @@ const generateDocument = () => {
     if (validateForm()) {
         const quoteData = {
             logo: logo.value || null,
-            email_from: email_from.value.trim(),
-            business_address: business_address.value.trim(),
+            email: email.value.trim(),
+            address: address.value.trim(),
             subject: subject.value.trim(),
             c_name: c_name.value.trim(),
             c_no: c_no.value.trim(),
@@ -314,8 +321,9 @@ const generateDocument = () => {
             items: items.length > 0 ? items : [],
             total: calculate_total.value || 0,
             notes: notes.value.trim() || "",
+            borrower_id: borrower_id.id
         };
-
+        console.log(quoteData)
         saveQuoteToDatabase(quoteData);
     }
 };
