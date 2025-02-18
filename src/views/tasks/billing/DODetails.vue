@@ -105,7 +105,12 @@ import Swal from 'sweetalert2';
 import { onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import DoEdit from '@/components/DoEdit.vue';
-
+const borrower_id = defineProps({
+    id:{
+        required: true,
+        type: String
+    }
+})
 const route = useRoute();
 const delivery_order_id = ref(); // Gunakan ref untuk boleh dikemas kini
 const quote = ref({});
@@ -123,16 +128,15 @@ const fetchDetails = async ($id) => {
 
     try {
         console.log("Fetching delivery order for ID:", $id);
-        const response = await axios.get(`http://quotation.test/api/DO/${$id}`);
+        const response = await axios.get(`http://quotation.test/api/DO/`+borrower_id.id);
         console.log("Fetched Data:", response.data);
+        
 
-        const { delivery_order, quote: fetchedQuote, do_total, items: fetchedItems, bank_details } = response.data;
-
-        devOr.value = delivery_order;
-        quote.value = fetchedQuote;
-        items.value = fetchedItems;
-        bankDetails.value = bank_details;
-        total.value = do_total;
+        devOr.value = response.data
+        quote.value = response.data.quotations
+        items.value = response.data.q_items
+        bankDetails.value = response.data.q_bank_details
+        total.value = response.data.do_total
 
     } catch (error) {
         console.error("Error fetching details:", error);

@@ -109,10 +109,14 @@
                 Create Delivery Order</button>
             <button @click="navigateToInvoice" class="btn btn-success rounded-md text-white font-bold w-full">
                 Create Invoice</button>
-            <button @click="navigateToDODetails" class="btn btn-success rounded-md text-white font-bold w-full">
-                DO Details</button>
-            <button @click="navigateToInvDetails" class="btn btn-success rounded-md text-white font-bold w-full">
-                Invoice Details</button>
+                <RouterLink :to="{name: 'DODetails', params:{id: doId}}"
+                        class="btn btn-success rounded-md text-white font-bold w-full"> 
+                        DO Details 
+                </RouterLink>
+                <RouterLink :to="{name: 'InvoiceDetails', params:{id: InvoiceId}}"
+                        class="btn btn-success rounded-md text-white font-bold w-full"> 
+                        Invoice Details
+                </RouterLink>
         </div>
     </main>
 </template>
@@ -131,6 +135,8 @@ const items = ref([]);
 const devOr = ref({});
 const inv = ref({});
 const showEditModal = ref(false);
+const doId = ref({})
+const InvoiceId = ref({})
 const quoteId = defineProps({
     id:{
         required: true,
@@ -144,7 +150,9 @@ const fetchQuoteDetails = async () => {
         console.log("Fetching quotation for ID: ", quoteId.id);
 
         const response = await axios.get(`http://quotation.test/api/Quotation/`+quoteId.id );
-
+        doId.value = response.data.q_delivery_orders.id
+        InvoiceId.value = response.data.q_invoices.id
+        
         if (response.data) {
             quote.value = response.data;
             items.value = response.data.q_items || [];

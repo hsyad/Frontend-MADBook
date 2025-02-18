@@ -4,7 +4,7 @@
             <div class="d-flex mb-4 justify-between items-center">
                 <div class="d-column gap-2 ">
                     <h2 class="fw-semibold mb-2">Invoice Details</h2>
-                    <p class="mb-0">Subject: {{ invoice.subject }}</p>
+                    <p class="mb-0">Subject: {{ quotation.subject }}</p>
                 </div>
                 <div class="d-flex gap-2">
                     <button @click="downloadDoc" class="btn btn-primary rounded-md text-white font-bold h-12 w-20">
@@ -26,21 +26,21 @@
                     <div class="d-flex items-center my-4">
 
                         <div v-if="invoice.logo" class="d-inline-block overflow-hidden h-20">
-                            <img :src="invoice.logo" alt="logo" class="h-full object-contain">
+                            <img :src="quotation.logo" alt="logo" class="h-full object-contain">
                         </div>
                     </div>
 
                     <p class="text-secondary small">
-                        {{ invoice.address || "No Address" }} | {{ invoice.email || "No Email" }}
+                        {{ quotation.address || "No Address" }} | {{ quotation.email || "No Email" }}
                     </p>
 
                     <!-- CUSTOMER DETAILS -->
                     <div class="d-flex justify-between my-4">
                         <div class="text-start flex-grow-1">
                             <p class="mb-1"><strong>Bill To:</strong></p>
-                            <p class="mb-1 fs-6">{{ invoice.c_name }}</p>
-                            <p class="mb-1 fs-6">{{ invoice.c_no }}</p>
-                            <p class="mb-1 fs-6 whitespace-pre">{{ invoice.c_address }}</p>
+                            <p class="mb-1 fs-6">{{ quotation.c_name }}</p>
+                            <p class="mb-1 fs-6">{{ quotation.c_no }}</p>
+                            <p class="mb-1 fs-6 whitespace-pre">{{ quotation.c_address }}</p>
                         </div>
 
                         <!-- INVOICE DETAILS -->
@@ -69,25 +69,25 @@
                                 <td class="text-start">{{ item.name }}</td>
                                 <td>{{ item.price }}</td>
                                 <td>{{ item.quantity }}</td>
-                                <td>{{ item.amount }}</td>
+                                <td>{{ (item.price * item.quantity).toFixed(2) }}</td>
                             </tr>
                         </tbody>
                     </table>
 
                     <!-- SHIPPING DETAILS -->
                     <div class="d-flex flex-column align-items-end gap-2 mt-4">
-                        <p class="mb-1 text-end">Ship By: {{ invoice.ship_by }}</p>
-                        <p class="mb-1 text-end">Shipping Fee: RM{{ invoice.ship_fee }}</p>
+                        <p class="mb-1 text-end">Ship By: {{ q_delivery_order.ship_by }}</p>
+                        <p class="mb-1 text-end">Shipping Fee: RM{{ q_delivery_order.ship_fee }}</p>
                         <p class="fw-semibold text-end">
                             Total: RM{{ invoice.i_total }}
                         </p>
                     </div>
 
-                    <p class="mt-5"><strong>Notes: </strong>{{ invoice.notes }}</p>
+                    <p class="mt-5"><strong>Notes: </strong>{{ quotation.notes }}</p>
                     <div class="mt-4 mb-4 border-s-8 border-emerald-500 pl-4">
-                        <p class="mt-3 mb-px text-sm"> {{ invoice.bank_name }}</p>
-                        <p class="mb-px text-sm"> {{ invoice.acc_holder }}</p>
-                        <p class="mb-px text-sm"> {{ invoice.acc_num }}</p>
+                        <p class="mt-3 mb-px text-sm"> {{ q_bank_detail.bank_name }}</p>
+                        <p class="mb-px text-sm"> {{ q_bank_detail.acc_holder }}</p>
+                        <p class="mb-px text-sm"> {{ q_bank_detail.acc_num }}</p>
                     </div>
                 </div>
             </div>
@@ -106,15 +106,25 @@ import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const invoice = ref({});
+const quotation = ref('')
+const q_item = ref('')
+const q_delivery_order = ref('')
+const q_bank_detail = ref('')
 const invoiceId = route.params.id;
 
 const fetchInvoice = async () => {
     try {
         console.log("Fetching invoice for ID: ", invoiceId);
 
-        const response = await axios.get(`http://quotation.test/api/Invoice/${invoiceId}`);
-        console.log('API URL:', url);
+        const response = await axios.get(`http://quotation.test/api/Invoice/`+invoiceId);
         invoice.value = response.data;
+
+        const {quotations, q_items, q_delivery_orders, q_bank_details} = response.data
+        quotation.value = quotations
+        q_item.value = q_items
+        q_delivery_order.value = q_delivery_orders
+        q_bank_detail.value = q_bank_details
+        console.log(response.data)
 
     } catch (error) {
         console.error("Error fetching invoice:", error);
