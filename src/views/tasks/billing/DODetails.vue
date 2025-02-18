@@ -127,9 +127,7 @@ const fetchDetails = async ($id) => {
     }
 
     try {
-        console.log("Fetching delivery order for ID:", $id);
-        const response = await axios.get(`http://quotation.test/api/DO/`+borrower_id.id);
-        console.log("Fetched Data:", response.data);
+        const response = await axios.get(`http://quotation.test/api/DO/`+borrower_id.id);   
         
 
         devOr.value = response.data
@@ -145,7 +143,7 @@ const fetchDetails = async ($id) => {
 
 // **Gunakan watch untuk monitor perubahan ID dalam route**
 watchEffect(() => {
-    console.log("Delivery order:", devOr);
+    //console.log("Delivery order:", devOr);
 });
 
 // **Download Dokumen PDF**
@@ -204,7 +202,7 @@ const saveEdit = async (updatedData) => {
 onMounted(() => {
     const route = useRoute();
     delivery_order_id.value = route.params.id;  // Ambil ID dari route params
-    console.log("Delivery Order ID:", delivery_order_id.value);  // Pastikan ID ada
+    //console.log("Delivery Order ID:", delivery_order_id.value);  // Pastikan ID ada
 
     if (delivery_order_id.value) {
         fetchDetails(delivery_order_id.value);  // Panggil fetchDetails dengan ID

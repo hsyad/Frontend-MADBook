@@ -114,8 +114,6 @@ const invoiceId = route.params.id;
 
 const fetchInvoice = async () => {
     try {
-        console.log("Fetching invoice for ID: ", invoiceId);
-
         const response = await axios.get(`http://quotation.test/api/Invoice/`+invoiceId);
         invoice.value = response.data;
 
@@ -124,7 +122,6 @@ const fetchInvoice = async () => {
         q_item.value = q_items
         q_delivery_order.value = q_delivery_orders
         q_bank_detail.value = q_bank_details
-        console.log(response.data)
 
     } catch (error) {
         console.error("Error fetching invoice:", error);

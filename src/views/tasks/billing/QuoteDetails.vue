@@ -147,8 +147,6 @@ const quoteId = defineProps({
 //Fetch quotation details
 const fetchQuoteDetails = async () => {
     try {
-        console.log("Fetching quotation for ID: ", quoteId.id);
-
         const response = await axios.get(`http://quotation.test/api/Quotation/`+quoteId.id );
         doId.value = response.data.q_delivery_orders.id
         InvoiceId.value = response.data.q_invoices.id
