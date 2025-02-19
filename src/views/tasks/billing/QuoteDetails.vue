@@ -131,35 +131,30 @@
 
         <!-- BUTTONS -->
         <div>
-            <!-- kalau quotation ini takde DO dan Invoice, create buttons sahaja akan muncul -->
-            <div class="d-flex gap-1 mb-2" v-if="!quote.delivery_order && !quote.invoice">
-                <button @click="createDO" class="btn btn-success rounded-md text-white font-bold w-full">
-                    Create Delivery Order</button>
+            <div class="d-flex gap-1 mb-2" v-if="!doId && !InvoiceId">
 
-                <button @click="createInvoice" class="btn btn-success rounded-md text-white font-bold w-full">
-                    Create Invoice</button>
+                <RouterLink :to="{ name: 'CreateDO', params: { id: quote.id } }"
+                    class="btn btn-success rounded-md text-white font-bold w-full">
+                    Create Delivery Order
+                </RouterLink>
+
+
+                <RouterLink :to="{ name: 'CreateInvoice', params: { id: quote.id } }"
+                    class="btn btn-success rounded-md text-white font-bold w-full">
+                    Create Invoice
+                </RouterLink>
             </div>
 
-            <!-- kalau quotation ini dah ada DO dan Invoice, view buttons sahaja akan muncul -->
-            <div class="d-flex gap-1 mb-2" v-else-if="quote.delivery_order && !quote.invoice">
-                <RouterLink :to="{ name: 'DODetails', params: { id: quote.delivery_order } }"
+            <div class="d-flex gap-1 mb-2" v-else-if="doId && InvoiceId">
+
+                <RouterLink :to="{ name: 'DODetails', params: { id: doId } }"
                     class="btn btn-success rounded-md text-white font-bold w-full">
                     DO Details
                 </RouterLink>
-                <RouterLink :to="{ name: 'InvoiceDetails', params: { id: quote.invoice } }"
+                <RouterLink :to="{ name: 'InvoiceDetails', params: { id: InvoiceId } }"
                     class="btn btn-success rounded-md text-white font-bold w-full">
                     Invoice Details
                 </RouterLink>
-            </div>
-
-
-            <!-- DEBUG -->
-            <div class="bg-white p-3 my-3 rounded-md gap-1 mt-5">
-                <p v-if="!quote.delivery_order">Delivery Order is missing</p>
-                <p v-else>Delivery Order is available</p>
-
-                <p v-if="!quote.invoice">Invoice is missing</p>
-                <p v-else>Invoice is available</p>
             </div>
         </div>
 
@@ -182,8 +177,8 @@ const items = ref([]);
 const devOr = ref({});
 const inv = ref({});
 const showEditModal = ref(false);
-const doId = ref({})
-const InvoiceId = ref({})
+const doId = ref(null)
+const InvoiceId = ref(null)
 const quoteId = defineProps({
     id: {
         required: true,
@@ -191,40 +186,14 @@ const quoteId = defineProps({
     }
 })
 
-const checkQuoteStatus = () => {
-    console.log('Delivery Order:', this.quote.delivery_order);
-    console.log('Invoice:', this.quote.invoice);
-
-    // Menyemak jika Delivery Order dan Invoice ada atau hilang
-    if (!this.quote.delivery_order) {
-        console.log('Delivery Order is missing');
-    } else {
-        console.log('Delivery Order is available');
-    }
-
-    if (!this.quote.invoice) {
-        console.log('Invoice is missing');
-    } else {
-        console.log('Invoice is available');
-    }
-}
-
-
 //Fetch quotation details
 const fetchQuoteDetails = async () => {
     try {
         const response = await axios.get(`http://quotation.test/api/Quotation/` + quoteId.id);
         const { q_delivery_orders, q_invoices } = response.data
 
-        if (q_delivery_orders != null)
-            doId.value = q_delivery_orders.id
-        else
-            doId.value = 'nonexistent'
-
-        if (q_invoices != null)
-            InvoiceId.value = q_invoices.id
-        else
-            InvoiceId.value = 'nonexistent'
+        doId.value = q_delivery_orders ? q_delivery_orders.id : null;
+        InvoiceId.value = q_invoices ? q_invoices.id : null;
 
         if (response.data) {
             quote.value = response.data;
@@ -344,34 +313,8 @@ const statusColor = computed(() => {
     return quote.value.status === 1 ? 'text-success' : 'text-secondary';
 });
 
-const createDO = () => {
-    router.push('/create-delivery-order');
-}
-
-const createInvoice = () => {
-    router.push('/create-invoice');
-}
-
-// const viewDO = () => {
-//     if (devOr.value) {
-//         router.push(`/DO/${devOr.value.id}`);
-//     } else {
-//         alert("No Delivery Order linked to this Quotation");
-//     }
-// }
-
-// const viewInvoice = () => {
-//     if (inv.value) {
-//         router.push(`/Invoice/${inv.value.id}`);
-//     } else {
-//         alert("No Invoice linked to this Quotation");
-//     }
-// }
-
 onMounted(async () => {
     fetchQuoteDetails();
-
-
 });
 </script>
 

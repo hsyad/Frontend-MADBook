@@ -135,7 +135,7 @@ import Swal from 'sweetalert2';
 import router from '@/router';
 
 const borrower_id = defineProps({
-    id:{
+    id: {
         required: true,
     }
 })
@@ -277,7 +277,6 @@ const updatePreview = () => {
     previewContent.value = generatePreviewContent();
 };
 
-// Save quote data without using madbookStore
 const saveQuoteToDatabase = async (quoteData) => {
     try {
         // Simulate saving the quote data to a database

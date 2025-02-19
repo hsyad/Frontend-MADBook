@@ -16,14 +16,14 @@
                     <button @click="openModal" class="btn btn-success h-12 w-20">Edit</button>
                     <button class="btn btn-danger h-12 w-20">Delete</button>
 
-                    <DoEdit v-if="showEditModal" :showEditModal="showEditModal" :devOr="devOr"
+                    <DoEdit v-if="showEditModal" :showEditModal="showEditModal" :qdo="qdo"
                         @update:items="items = $event" @update:showEditModal="showEditModal = $event"
                         @close="showEditModal = false" @save="saveEdit" />
                 </div>
             </div>
 
             <!-- DELIVERY ORDER CONTENT -->
-            <div class="border border-dark rounded p-4" v-if="devOr">
+            <div class="border border-dark rounded p-4" v-if="qdo">
                 <div class="px-3">
                     <h2 class="mt-4 text-end fw-semibold">Delivery Order</h2>
 
@@ -44,17 +44,17 @@
                         <!-- CUSTOMER DETAILS -->
                         <div class="text-start flex-grow-1">
                             <p class="mb-1"><strong>Delivery To:</strong></p>
-                            <p class="mb-1 fs-6">{{ devOr.c_name }}</p>
-                            <p class="mb-1 fs-6">{{ devOr.c_no }}</p>
-                            <p class="mb-1 fs-6">{{ devOr.c_address }}</p>
+                            <p class="mb-1 fs-6">{{ qdo.c_name }}</p>
+                            <p class="mb-1 fs-6">{{ qdo.c_no }}</p>
+                            <p class="mb-1 fs-6">{{ qdo.c_address }}</p>
                         </div>
 
                         <!-- DO DETAILS -->
                         <div class="text-end">
                             <p class="mb-1"><strong class="mr-2">DO No:</strong> {{ delivery_order_id }}</p>
-                            <p class="mb-1"><strong class="mr-2">Issue Date:</strong> {{ devOr.issue_date }}</p>
-                            <p class="mb-1"><strong class="mr-2">Delivery Date:</strong> {{ devOr.delivery_date }}</p>
-                            <p class="mb-1"><strong class="mr-2">Due Date:</strong> {{ devOr.due_date }}</p>
+                            <p class="mb-1"><strong class="mr-2">Issue Date:</strong> {{ qdo.issue_date }}</p>
+                            <p class="mb-1"><strong class="mr-2">Delivery Date:</strong> {{ qdo.delivery_date }}</p>
+                            <p class="mb-1"><strong class="mr-2">Due Date:</strong> {{ qdo.due_date }}</p>
                         </div>
                     </div>
 
@@ -76,15 +76,15 @@
 
                     <!-- SHIPPING DETAILS -->
                     <div class="d-flex flex-column align-items-end gap-2 mt-4">
-                        <p class="mb-1 text-end">Ship By: {{ devOr.ship_by }}</p>
-                        <p class="mb-1 text-end">Shipping Fee: RM{{ devOr.ship_fee }}</p>
+                        <p class="mb-1 text-end">Ship By: {{ qdo.ship_by }}</p>
+                        <p class="mb-1 text-end">Shipping Fee: RM{{ qdo.ship_fee }}</p>
                         <p class="fw-semibold text-end">
-                            Total: RM{{ parseFloat(devOr.do_total || 0).toFixed(2) }}
+                            Total: RM{{ parseFloat(qdo.do_total || 0).toFixed(2) }}
                         </p>
                     </div>
 
                     <!-- NOTES -->
-                    <p class="mt-5"><strong>Notes:</strong> {{ devOr.notes }}</p>
+                    <p class="mt-5"><strong>Notes:</strong> {{ qdo.notes }}</p>
 
                     <!-- BANK DETAILS -->
                     <div v-if="bankDetails" class="mt-4 mb-4 border-s-8 border-emerald-500 pl-4">
@@ -102,20 +102,21 @@
 <script setup>
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { onMounted, ref, watch, watchEffect } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import DoEdit from '@/components/DoEdit.vue';
+
 const borrower_id = defineProps({
-    id:{
+    id: {
         required: true,
         type: String
     }
-})
-const route = useRoute();
+});
+
 const delivery_order_id = ref(); // Gunakan ref untuk boleh dikemas kini
 const quote = ref({});
 const items = ref([]);
-const devOr = ref({});
+const qdo = ref({});
 const bankDetails = ref({});
 const total = ref(0); // Deklarasikan total supaya tidak undefined
 const showEditModal = ref(false);
@@ -127,10 +128,10 @@ const fetchDetails = async ($id) => {
     }
 
     try {
-        const response = await axios.get(`http://quotation.test/api/DO/`+borrower_id.id);   
-        
+        const response = await axios.get(`http://quotation.test/api/DO/` + borrower_id.id);
 
-        devOr.value = response.data
+
+        qdo.value = response.data
         quote.value = response.data.quotations
         items.value = response.data.q_items
         bankDetails.value = response.data.q_bank_details
@@ -141,20 +142,15 @@ const fetchDetails = async ($id) => {
     }
 };
 
-// **Gunakan watch untuk monitor perubahan ID dalam route**
-watchEffect(() => {
-    //console.log("Delivery order:", devOr);
-});
-
 // **Download Dokumen PDF**
 const downloadDoc = async () => {
     try {
-        if (!devOr.value.id) {
+        if (!qdo.value.id) {
             Swal.fire({ title: 'Error', text: 'Invalid document ID', icon: 'error' });
             return;
         }
 
-        const response = await axios.get(`http://quotation.test/api/DO/${devOr.value.id}/download`, {
+        const response = await axios.get(`http://quotation.test/api/DO/${qdo.value.id}/download`, {
             responseType: 'blob'
         });
 
@@ -181,16 +177,16 @@ const closeModal = () => showEditModal.value = false;
 // **Simpan Edit**
 const saveEdit = async (updatedData) => {
     try {
-        if (!devOr.value.id) {
+        if (!qdo.value.id) {
             Swal.fire({ title: 'Error', text: 'Invalid delivery order ID', icon: 'error' });
             return;
         }
 
-        await axios.put(`http://quotation.test/api/DO/${devOr.value.id}`, updatedData);
+        await axios.put(`http://quotation.test/api/DO/${qdo.value.id}`, updatedData);
 
         Swal.fire({ title: 'Success', text: 'Delivery order updated successfully', icon: 'success', confirmButtonColor: '#4cbb17' });
         closeModal();
-        fetchDetails(devOr.value.id); // Refresh data selepas update
+        fetchDetails(qdo.value.id); // Refresh data selepas update
 
     } catch (error) {
         Swal.fire({ title: 'Error', text: error.response?.data?.message || 'Failed to update delivery order', icon: 'error' });

@@ -6,7 +6,7 @@
             <div class="d-flex gap-2 align-middle">
                 <!-- <label for="subject">Subject: </label> -->
                 <p class="fw-semibold">Subject:</p>
-                <p class="text-gray-600">Test 1</p>
+                <p class="text-gray-600">{{ quote.subject }}</p>
             </div>
         </div>
 
@@ -17,7 +17,7 @@
             <div class="d-flex flex-column p-3 border-end" style="flex:0.8" v-html="sanitizedContent"></div>
 
             <!-- FORM COLUMN -->
-            <div class="p-3 flex-1">
+            <div v-if="qdo" class="p-3 flex-1">
                 <p class="my-3 mb-5"><strong>DO No: <span class="auto-generate">
                             #{{ reference_number }}</span></strong>
                 </p>
@@ -25,21 +25,8 @@
                 <!-- LOGO -->
                 <div class="d-flex align-middle gap-3">
 
-                    <input class="d-none" type="file" id="logo" ref="logo_input" @change="handleLogoInput"
-                        accept="image/*" />
-
-                    <button type="button"
-                        class="btn mb-3 gap-2 d-inline-flex align-items-center text-green-800 hover-bg-success-text-white"
-                        :class="{
-                            'btn-outline-success': !isDisabled,
-                            'btn-secondary': isDisabled
-                        }" @click="triggerLogoUpload">
-                        <span class="material-icons">upload</span>
-                        <span>Add your logo</span>
-                    </button>
-
                     <div v-if="logo">
-                        <span class="file-name">{{ logo_name }}</span>
+                        <span class="file-name">{{ quote?.logo }}</span>
                         <button type="button" class="btn text-danger border-0 rounded-3 p-2 cursor-pointer mx-auto"
                             @click="deleteLogo" disabled>
                             <i class="fas fa-xmark"></i> </button>
@@ -70,24 +57,14 @@
                     <table class="rounded-md mt-4">
                         <thead>
                             <tr>
-                                <th>No.</th>
                                 <th>Items</th>
                                 <th>Price</th>
-                                <th>Quantity</th>
-                                <th>Amount</th>
-                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(item, index) in items" :key="index">
-                                <td>{{ index + 1 }}</td>
-                                <td><input class="mt-2" type="text" v-model="item.name" disabled /></td>
-                                <td><input type="number" v-model="item.price" disabled /></td>
-                                <td><input type="number" v-model="item.quantity" disabled /></td>
-                                <td>{{ (item.quantity * item.price) || 0 }}</td>
-                                <td><button type="button"
-                                        class="btn text-danger border-0 rounded-3 p-2 cursor-pointer d-block mx-auto"
-                                        @click="removeItem(index)" disabled><i class="fas fa-trash"></i></button></td>
+                                <td class="text-start">{{ item.name }}</td>
+                                <td class="text-center">{{ item.quantity }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -141,7 +118,7 @@
 
                     <!-- CALCULATE TOTAL -->
                     <div class="text-lg text-right mt-3 mb-5 font-bold">
-                        <span>Total: RM{{ calculate_total }}</span>
+                        <span>Total: RM{{ qdo?.do_total ?? '0.00' }}</span>
                     </div>
 
                     <!-- GENERATE/SAVE DOCUMENT -->
@@ -156,14 +133,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
+import { computed, onMounted, ref, watch, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { useMADBookStore } from '@/stores/madbookStore';
-import logoImg from '/src/assets/images/kucen.png';
-
-const madbookStore = useMADBookStore();
 
 //FORM//
 const reference_number = ref('');
@@ -172,15 +145,7 @@ const reference_number = ref('');
 const isDisabled = ref(true);
 
 //LOGO
-const logo = ref(logoImg);
-const logo_name = ref(null);
-const logo_input = ref(null);
-const logo_path = ref(null);
-
-//INFO
-const email_from = ref('');
-const business_address = ref('');
-const subject = ref('');
+const logo = ref(null);
 
 //CLIENT DETAILS
 const c_name = ref('');
@@ -196,54 +161,7 @@ const due_date = ref('');
 const ship_by = ref('');
 const ship_fee = ref(0);
 
-//ITEMS
-const items = reactive([
-    { name: 'Item 1', price: 100, quantity: 2 },
-    { name: "Item 2", price: 50, quantity: 1 },
-]);
-
 const notes = ref('');
-const previewContent = ref('');
-const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
-const totalWithShipping = ref('');
-
-const generateRandNum = () => {
-    const randomNumber = Math.floor(Math.random() * 10000);
-    reference_number.value = `${randomNumber}`;
-};
-
-const triggerLogoUpload = () => {
-    if (!isDisabled.value) {
-        document.getElementById('logo_upload').click();
-    }
-};
-
-const handleLogoInput = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        isDisabled.value = false;
-    }
-};
-
-const removeItem = (index) => {
-    items.splice(index, 1);
-};
-
-const generateDocument = () => {
-    try {
-        Swal.fire({
-            title: "Success",
-            text: "Delivery order successfully created!",
-            icon: "success",
-            confirmButtonText: "Back",
-        }).then(() => {
-            window.history.back();
-        });
-    } catch (error) {
-        console.error("Error saving delivery order: ", error);
-        Swal.fire("Error", "Failed to save delivery order. Please try again.", "error");
-    }
-};
 
 // BANK DETAILS
 const showForm = ref(false);
@@ -253,129 +171,218 @@ const bankDetails = ref({
     acc_holder: '',
     acc_num: '',
 });
+
+// const delivery_order_id = ref(); // Gunakan ref untuk boleh dikemas kini
+const quote = ref({});
+const items = ref([]);
+const qdo = ref({});
+const total = ref(0); // Deklarasikan total supaya tidak undefined
+
+const previewContent = ref('');
+const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
+
+const quote_id = ref('');
+const props = defineProps({
+    id: {
+        required: true,
+        type: String
+    }
+})
+
+const doData = ref({
+    quote_id: quote_id.value
+});
+
+const generateRandNum = () => {
+    const randomNumber = Math.floor(Math.random() * 10000);
+    reference_number.value = `${randomNumber}`;
+};
+
+// Calculate the total of the items in the quotation
+const calculate_total = computed(() => {
+    const q_total = items.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return (q_total + parseFloat(ship_fee.value)).toFixed(2);
+});
+
 const toggleForm = () => {
     showForm.value = !showForm.value;
 };
-//save to pinia
-const saveBankDetails = () => {
-    madbookStore.setBankDetails(bankDetails.value);
-    madbookStore.setSaveToDB(saveToDB.value);
 
-    if (saveToDB.value) {
-        //add logic here to save to database
-        Swal.fire('Save', 'Save to database', 'success');
+const fetchDetails = async () => {
+    if (!props.id) {
+        console.error("Error: DO ID is undefined");
+        return;
     }
 
-    showForm.value = false; //hide the form after saving
-};
+    try {
+        const response = await axios.get(`http://quotation.test/api/Quotation/${props.id}`);
+        console.log(response.data);
 
-const generatePreviewContent = () => {
-    return `
-                <div class="border border-dark rounded p-3">
-                    <div class="px-3">
-                    <h2 class="mt-4 text-end fw-semibold">Delivery Order</h2>
+        quote_id.value = response.data.quotation_id;
+        qdo.value = response.data;
+        quote.value = response.data.quotations;
+        items.value = response.data.q_items;
+        total.value = response.data.do_total || 0;
 
-                    <div class="d-flex justify-flex-start items-center my-4">
-                        ${logo.value ? `
-                        <div class="d-inline-block overflow-hidden h-20">
-                            <img src="${logo.value}" alt="logo" class="h-100 object-contain">
-                        </div>
-                        ` : ""}
-                    </div>
-
-                    <p class="text-secondary small">123 Business Street, City, State | info@business.com</p>
-
-                    <div class="d-flex justify-between my-4">
-                        <div class="text-start flex-grow-1">
-                            <p class="mb-1"><strong>Delivery To:</strong></p>
-                            <p class="mb-1 fs-7">${c_name.value}</p>
-                            <p class="mb-1 fs-7">${c_no.value}</p>
-                            <p class="mb-1 fs-7 whitespace-pre">${c_address.value}</p>
-                        </div>
-
-                        <div class=" d-flex gap-2 justify-end">
-                            <div class="text-end">
-                                <p class="mb-1"><strong>DO No: </strong></p>
-                                <p class="mb-1"><strong>Issue Date: </strong></p>
-                                <p class="mb-1"><strong>Delivery Date: </strong></p>
-                                <p class="mb-1"><strong>Due Date: </strong></p>
-                            </div>
-                            <div class="text-start">
-                                <p class="mb-1">${reference_number.value}</p>
-                                <p class="mb-1">${issue_date.value}</p>
-                                <p class="mb-1">${delivery_date.value}</p>
-                                <p class="mb-1">${due_date.value}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <table class="table table-borderless shadow-none">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th class="w-auto text-start">Items</th>
-                                <th class="w-20">Quantity</th>
-                            </tr>
-                        </thead>
-                        <tbody class="border-bottom">
-                            ${items
-            .map(
-                (item, index) => `
-                                        <tr>
-                                            <td class="text-start">${item.name}</td>
-                                            <td class="w-10 text-center">${item.quantity}</td>
-                                        </tr>
-                                    `
-            )
-            .join("")}
-
-                        </tbody>
-                    </table>
-
-                    <div class="d-flex flex-column align-items-end gap-2 mt-10">
-                        <div v-if="ship_by.value" class="d-flex justify-content-end w-100">
-                            <p class="mb-px text-end">Ship By:</p>
-                            <p class="mb-px text-end ms-2">${ship_by.value}</p>
-                        </div>
-                        <div class="d-flex justify-content-end w-100 fw-semibold">
-                            <p class="text-end">Shipping Fee:</p>
-                            <p class="text-end ms-2">RM${parseFloat(ship_fee.value || 0).toFixed(2)}</p>
-                        </div>
-                    </div>
-
-
-                    <p class="mt-5"><strong>Notes:</strong> ${notes.value}</p>
-                    <div class="mt-4 mb-4 border-s-8 border-emerald-500 pl-4">
-                        <p class="mt-3 mb-px text-sm"> ${bankDetails.value.bank_name}</p>
-                        <p class="mb-px text-sm"> ${bankDetails.value.acc_holder}</p>
-                        <p class="mb-px text-sm"> ${bankDetails.value.acc_num}</p>
-                    </div>
-
-                </div>
-                </div>
-            `;
+        updatePreview();
+    } catch (error) {
+        console.error("Error fetching details:", error);
+    }
 };
 
 const updatePreview = () => {
     previewContent.value = generatePreviewContent();
 };
 
-//CALCULATE TOTAL
-const calculate_total = computed(() => {
-    const total = items.reduce((sum, item) => {
-        return sum + (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 0);
-    }, 0);
-
-    const totalWithShipping = total + (parseFloat(ship_fee.value) || 0); // Use .value for ref
-
-    return totalWithShipping.toFixed(2);
+watch(qdo, (newVal) => {
+    if (newVal) {
+        updatePreview();
+    }
 });
 
-watchEffect(() => {
-    updatePreview();
-});
+const generatePreviewContent = () => {
+    previewContent.value = `
+        <div class="border border-dark rounded p-3">
+            <div class="px-3">
+                <h2 class="mt-4 text-end fw-semibold">Delivery Order</h2>
+
+                <div class="d-flex justify-flex-start items-center my-4">
+                    ${quote.value?.logo ? `
+                        <div class="d-inline-block overflow-hidden h-20">
+                            <img src="${quote.value.logo}" alt="logo" class="h-100 object-contain">
+                        </div>
+                        ` : ""}
+                </div>
+
+                <p class="text-secondary small">
+                    ${quote.value.address || "No Address"} | ${quote.value.email || "No Email"}
+                </p>
+
+                <div class="d-flex justify-between my-4">
+                    <div class="text-start flex-grow-1">
+                        <p class="mb-1"><strong>Delivery To:</strong></p>
+                        <p class="mb-1 fs-7">${c_name.value}</p>
+                        <p class="mb-1 fs-7">${c_no.value}</p>
+                        <p class="mb-1 fs-7 whitespace-pre">${c_address.value}</p>
+                    </div>
+
+                    <div class=" d-flex gap-2 justify-end">
+                        <div class="text-end">
+                            <p class="mb-1"><strong>DO No: </strong></p>
+                            <p class="mb-1"><strong>Issue Date: </strong></p>
+                            <p class="mb-1"><strong>Delivery Date: </strong></p>
+                            <p class="mb-1"><strong>Due Date: </strong></p>
+                        </div>
+                        <div class="text-start">
+                            <p class="mb-1">${reference_number.value}</p>
+                            <p class="mb-1">${issue_date.value}</p>
+                            <p class="mb-1">${delivery_date.value}</p>
+                            <p class="mb-1">${due_date.value}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-borderless shadow-none">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th class="w-auto text-start">Items</th>
+                            <th class="w-20">Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody class="border-bottom">
+                        ${items.value.length > 0
+            ? items.value
+                .map(item => `
+                                            <tr>
+                                                <td class="text-start">${item.name}</td>
+                                                <td class="w-10 text-center">${item.quantity}</td>
+                                            </tr>
+                                        `
+                )
+                .join("")
+            : `<tr><td colspan="2" class="text-center">No items found</td></tr>`}
+                    </tbody>
+                </table>
+
+                <div class="d-flex flex-column align-items-end gap-2 mt-10">
+                    <div v-if="ship_by.value" class="d-flex justify-content-end w-100">
+                        <p class="mb-px text-end">Ship By:</p>
+                        <p class="mb-px text-end ms-2">${ship_by.value}</p>
+                    </div>
+                    <div class="d-flex justify-content-end w-100 fw-semibold">
+                        <p class="text-end">Shipping Fee:</p>
+                        <p class="text-end ms-2">RM${ship_fee.value}</p>
+                    </div>
+                    <div class="d-flex justify-content-end w-100 fw-semibold">
+                        <p class="text-end">Total:</p>
+                        <p class="text-end ms-2">RM${qdo.do_total.value}</p>
+                    </div>
+                </div>
+
+
+                <p class="mt-5"><strong>Notes:</strong> ${notes.value}</p>
+                <div class="mt-4 mb-4 border-s-8 border-emerald-500 pl-4">
+                    <p class="mt-3 mb-px text-sm"> ${bankDetails.value.bank_name}</p>
+                    <p class="mb-px text-sm"> ${bankDetails.value.acc_holder}</p>
+                    <p class="mb-px text-sm"> ${bankDetails.value.acc_num}</p>
+                </div>
+
+            </div>
+        </div>
+    `;
+};
+
+// Validate form inputs
+const validateForm = () => {
+    if (!c_name.value || items.length === 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Validation Error",
+            text: "Please fill in all required fields.",
+            confirmButtonColor: "#d33",
+        });
+        return false;
+    }
+    return true;
+};
+
+const saveDOToDatabase = async () => {
+    try {
+        // Simulate saving the DO data to a database
+        const response = await axios.post('http://quotation.test/api/DO/Store', doData); // Adjust URL to match your backend
+        const doId = response.data.qdo.id;
+        Swal.fire("Success", "Delivery order has been saved to the database!", "success");
+        router.push(`/ DO / ${doId} `);
+    } catch (error) {
+        console.error("Error saving delivery order: ", error);
+        Swal.fire("Error", "Failed to save delivery order. Please try again.", "error");
+    }
+};
+
+// Handle document generation
+const generateDocument = () => {
+    if (validateForm()) {
+        const doData = {
+            issue_date: issue_date.value.trim(),
+            delivery_date: delivery_date.value.trim(),
+            due_date: due_date.value.trim(),
+            ship_by: ship_by.value.trim(),
+            ship_fee: ship_fee.value.trim(),
+            c_name: c_name.value.trim(),
+            c_no: c_no.value.trim(),
+            c_address: c_address.value.trim(),
+            do_total: (parseFloat(calculate_total.value) + parseFloat(ship_fee.value)).toFixed(2),
+            notes: notes.value.trim() || "",
+            quote_id: quote_id.value,
+        };
+        console.log(doData)
+        saveDOToDatabase(doData);
+    }
+};
 
 onMounted(() => {
     generateRandNum();
     updatePreview();
+    fetchDetails();
 });
 </script>

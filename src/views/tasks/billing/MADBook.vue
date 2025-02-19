@@ -58,8 +58,8 @@
                     <tbody>
                         <tr v-for="(quote, index) in quotes" :key="quote.id" class="cursor-pointer"
                             @click="viewQuoteDetails(quote)">
-                            <td class="border border-gray-300 px-4 py-2">{{ index + 1 }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ "#00" + quote.id }}</td>
+                            <td class="border border-gray-300 w-0 px-4 py-2">{{ index + 1 }}</td>
+                            <td class="border border-gray-300 w-0 px-4 py-2">{{ "#00" + quote.id }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.c_name }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.subject }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.q_total }}</td>
@@ -96,20 +96,19 @@
                     </thead>
                     <tbody>
                         <tr v-for="(invoice, index) in invoices" :key="invoice.id" @click="viewInvoiceDetails()">
-                            <td class="border border-gray-300 px-4 py-2">{{ index + 1 }}</td>
-                            <td class="border border-gray-300 px-4 py-2">{{ "#00" + invoice.id }}</td>
+                            <td class="border border-gray-300 w-0 px-4 py-2">{{ index + 1 }}</td>
+                            <td class="border border-gray-300 w-0 px-4 py-2">{{ "#00" + invoice.id }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.quotations.c_name }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.quotations.subject }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.i_total }}</td>
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
-                                    class="d-flex bg-gray-300 rounded-full w-full h-7 p-1 text-white font-semibold justify-center"
+                                    class="d-flex bg-gray-300 rounded-full w-20 h-7 p-1 text-white font-semibold justify-center"
                                     :class="{
-                                        'bg-gray-300': invoice.status === 'Pending',
-                                        'bg-yellow-600': invoice.status === 'Outstanding',
+                                        'bg-yellow-600': invoice.status === 'Pending',
                                         'bg-green-600': invoice.status === 'Paid',
                                         'bg-red-600': invoice.status === 'Canceled',
-                                    }" disabled>
+                                    }" disabled>{{ invoice.status }}
                                 </button>
                             </td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.issue_date }}</td>
@@ -124,9 +123,8 @@
 </template>
 
 <script setup>
-import { useMADBookStore } from '@/stores/madbookStore';
-import { computed, onMounted, reactive, ref } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 onMounted(() => {
@@ -137,44 +135,9 @@ const quotes = ref([])
 const invoices = ref([])
 const borrowerId = 2;
 
-const madbookStore = useMADBookStore();
 const router = useRouter();
 
-// Fetch data on component mount
-// madbookStore.fetchQuote();
-// madbookStore.fetchInvoice();
-
-
-const statusButton = ref("Pending");
 const currentTab = ref("quotation");
-
-const addQuote = () => {
-    router.push('/create-quotation');
-};
-
-// const confirmStatus = computed(() => {
-//     return (quote) => {
-//         if (quote.delivery_order && quote.invoice) {
-//             return "bg-green-500";
-//         }
-//         return "bg-gray-300";
-//     };
-// });
-
-const toggleBilling = (inv) => {
-    const statuses = ["Pending", "Paid", "Past Due"];
-    const currentIndex = statuses.indexOf(inv.status);
-    inv.status = statuses[(currentIndex + 1) % statuses.length];
-};
-
-const getPaymentStatus = (status) => {
-    const statusColors = {
-        Paid: "bg-green-600",
-        Pending: "bg-yellow-600",
-        "Past Due": "bg-red-600",
-    };
-    return statusColors[status] || "bg-gray-300";
-};
 
 const viewQuoteDetails = (quote) => {
     router.push(`/quotation/${quote.id}`);

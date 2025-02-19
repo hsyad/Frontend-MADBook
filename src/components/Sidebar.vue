@@ -70,7 +70,7 @@
         </div>
         <!-- CREATE DO -->
         <div class="sidebar-links">
-            <router-link class="button" to="/create-delivery-order">
+            <router-link class="button" to="/create-delivery-order/:id">
                 <span class="material-icons">filter_4</span>
                 <span class="text">Create DO</span>
             </router-link>
@@ -84,7 +84,7 @@
         </div>
         <!-- CREATE INVOICE -->
         <div class="sidebar-links">
-            <router-link class="button" to="/create-invoice">
+            <router-link class="button" to="/create-invoice/:id">
                 <span class="material-icons">filter_6</span>
                 <span class="text">Create Invoice</span>
             </router-link>

@@ -57,20 +57,24 @@ const router = createRouter({
             props: true
         },
         {
-            path: '/create-delivery-order',
+            path: '/create-delivery-order/:id',
             name: 'CreateDO',
             component: CreateDO,
+            props: true,
+
         },
         {
             path: '/do/:id',
             name: 'DODetails',
             component: DODetails,
-            props:true
+            props: true
         },
         {
-            path: '/create-invoice',
+            path: '/create-invoice/:id',
             name: 'CreateInvoice',
             component: CreateInvoice,
+            props: true,
+
         },
         {
             path: '/invoice/:id',
