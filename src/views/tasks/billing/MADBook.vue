@@ -30,10 +30,9 @@
             </div>
 
             <!-- ADD NEW QUOTATION -->
-             <RouterLink :to="{name: 'CreateQuotation',params: {id: String(borrowerId)}}" 
-                            class="btn btn-success rounded-md text-white font-bold w-40" 
-                            v-if="currentTab === 'quotation'" > 
-                            Add Quotation
+            <RouterLink :to="{ name: 'CreateQuotation', params: { id: String(borrowerId) } }"
+                class="btn btn-success rounded-md text-white font-bold w-40" v-if="currentTab === 'quotation'">
+                Add Quotation
             </RouterLink>
         </div>
 
@@ -67,7 +66,10 @@
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
                                     class="d-flex bg-gray-300 rounded-full w-full h-7 p-1 text-white font-semibold justify-center"
-                                    :class="confirmStatus">
+                                    :class="{
+                                        'bg-green-600': quote.status === 1,
+                                        'bg-gray-300': quote.status === 0,
+                                    }" disabled>
                                     Confirm</button>
                             </td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.issue_date }}</td>
@@ -102,8 +104,12 @@
                             <td class="border border-gray-300 px-4 py-2">
                                 <button
                                     class="d-flex bg-gray-300 rounded-full w-full h-7 p-1 text-white font-semibold justify-center"
-                                    :class="getPaymentStatus(invoice.status)" @click="toggleBilling(invoice)">
-                                    {{ invoice.status }}
+                                    :class="{
+                                        'bg-gray-300': invoice.status === 'Pending',
+                                        'bg-yellow-600': invoice.status === 'Outstanding',
+                                        'bg-green-600': invoice.status === 'Paid',
+                                        'bg-red-600': invoice.status === 'Canceled',
+                                    }" disabled>
                                 </button>
                             </td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.issue_date }}</td>
@@ -142,14 +148,18 @@ const router = useRouter();
 const statusButton = ref("Pending");
 const currentTab = ref("quotation");
 
-const confirmStatus = computed(() => {
-    return (quote) => {
-        if (quote.delivery_order && quote.invoice) {
-            return "bg-green-500";
-        }
-        return "bg-gray-300";
-    };
-});
+const addQuote = () => {
+    router.push('/create-quotation');
+};
+
+// const confirmStatus = computed(() => {
+//     return (quote) => {
+//         if (quote.delivery_order && quote.invoice) {
+//             return "bg-green-500";
+//         }
+//         return "bg-gray-300";
+//     };
+// });
 
 const toggleBilling = (inv) => {
     const statuses = ["Pending", "Paid", "Past Due"];
