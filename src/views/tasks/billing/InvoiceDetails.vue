@@ -47,8 +47,9 @@
                         <div class="text-end">
                             <p class="mb-1"><strong class="mr-2">Invoice No:</strong> {{ invoice.id }}</p>
                             <p class="mb-1"><strong class="mr-2">Issue Date:</strong> {{ invoice.issue_date }}</p>
-                            <p class="mb-1"><strong class="mr-2">Delivery Date:</strong> {{ invoice.delivery_date }}</p>
-                            <p class="mb-1"><strong class="mr-2">Due Date:</strong> {{ invoice.due_date }}</p>
+                            <p class="mb-1"><strong class="mr-2">Delivery Date:</strong> {{
+                                q_delivery_order.delivery_date }}</p>
+                            <p class="mb-1"><strong class="mr-2">Due Date:</strong> {{ q_delivery_order.due_date }}</p>
                         </div>
                     </div>
 
@@ -91,8 +92,44 @@
                     </div>
                 </div>
             </div>
-            <div class="flex m-2 justify-center">
+        </div>
 
+        <div class="p-3 my-3 bg-white rounded-md align-middle items-center">
+            <div>
+                <p class="fw-semibold">Current Status : {{ invoice.status }}</p>
+                <p class="text-gray-600 fw-semibold mb-0">Update the payment status below to keep track of the
+                    invoice progress.</p>
+            </div>
+
+            <div class="py-3">
+                <!-- PENDING -->
+                <div>
+                    <label class="inline-flex gap-2 items-center">
+                        <input type="radio" v-model="paymentStatus" value="Pending"
+                            class="form-radio text-yellow-600" />
+                        Pending
+                    </label>
+                </div>
+                <!-- PAID -->
+                <div>
+                    <label class="inline-flex gap-2 items-center">
+                        <input type="radio" v-model="paymentStatus" value="Paid" class="form-radio text-green-600" />
+                        Paid
+                    </label>
+                </div>
+                <!-- CANCELED -->
+                <div>
+                    <label class="inline-flex gap-2 items-center">
+                        <input type="radio" v-model="paymentStatus" value="Canceled" class="form-radio text-red-600" />
+                        Canceled
+                    </label>
+                </div>
+            </div>
+
+
+            <div>
+                <button @click="updatePaymentStatus" class="btn btn-success text-white py-2 px-4 rounded">Update Status
+                </button>
             </div>
         </div>
     </main>
@@ -106,6 +143,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 const route = useRoute();
 const invoice = ref({});
+const paymentStatus = ref('Pending');
 const quotation = ref('')
 const q_item = ref('')
 const q_delivery_order = ref('')
@@ -114,10 +152,10 @@ const invoiceId = route.params.id;
 
 const fetchInvoice = async () => {
     try {
-        const response = await axios.get(`http://quotation.test/api/Invoice/`+invoiceId);
+        const response = await axios.get(`http://quotation.test/api/Invoice/` + invoiceId);
         invoice.value = response.data;
 
-        const {quotations, q_items, q_delivery_orders, q_bank_details} = response.data
+        const { quotations, q_items, q_delivery_orders, q_bank_details } = response.data
         quotation.value = quotations
         q_item.value = q_items
         q_delivery_order.value = q_delivery_orders
@@ -154,6 +192,30 @@ const showEditWarning = () => {
         confirmButtonText: "OK",
         confirmButtonColor: "#FFA500" //orange
     });
+}
+
+const updatePaymentStatus = async () => {
+    try {
+        const response = await axios.put(`http://quotation.test/api/Invoice/${invoiceId}/Status`, {
+            status: paymentStatus.value
+        });
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Updated!',
+            text: 'Payment status updated successfully',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#4cbb17'
+        });
+    } catch (error) {
+        console.error('Error change payment status:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Something went wrong',
+            text: 'Please try again.',
+            confirmButtonText: 'OK',
+        });
+    }
 }
 
 

@@ -51,7 +51,7 @@
                             <div class="text-start">
                                 <div class="d-flex gap-3">
                                     <p><strong>Quote No: </strong> </p>
-                                    <p>{{ "#MAD00"+quoteId.id }}</p>
+                                    <p>{{ "#MAD00" + quoteId.id }}</p>
                                 </div>
                                 <div class="d-flex gap-2">
                                     <p><strong>Issue Date: </strong> </p>
@@ -101,23 +101,68 @@
                 <p class="mt-5"><strong>Notes: </strong> {{ quote.notes }}</p>
             </div>
         </div>
-        <div class="flex m-2 justify-center">
+        <div class="p-4 my-3 bg-white rounded-md align-middle items-center">
+            <div v-if="!quote.confirmed" class="d-flex justify-between">
+                <div>
+                    <p class="text-gray-600 fw-semibold mb-0">Please confirm if the client has accepted the
+                        quotation before
+                        proceeding
+                        to
+                        create the Delivery
+                        Order
+                        and Invoice.</p>
+                </div>
+                <div>
+                    <button @click="confirmQuotation" :class="confirmButtonClass" :disabled="isDisabled">
+                        Confirm
+                    </button>
 
+                </div>
+            </div>
+
+            <div>
+                <p class="mb-0 mt-2 fw-semibold">
+                    Current Status: <span :class="statusColor">{{ statusText }}</span>
+                </p>
+            </div>
         </div>
-        <div class="d-flex gap-1 mb-2">
-            <button @click="navigateToDO" class="btn btn-success rounded-md text-white font-bold w-full">
-                Create Delivery Order</button>
-            <button @click="navigateToInvoice" class="btn btn-success rounded-md text-white font-bold w-full">
-                Create Invoice</button>
-                <RouterLink :to="{name: 'DODetails', params:{id: doId}}"
-                        class="btn btn-success rounded-md text-white font-bold w-full"> 
-                        DO Details 
+
+        <div class="m-4"></div>
+
+        <!-- BUTTONS -->
+        <div>
+            <!-- kalau quotation ini takde DO dan Invoice, create buttons sahaja akan muncul -->
+            <div class="d-flex gap-1 mb-2" v-if="!quote.delivery_order && !quote.invoice">
+                <button @click="createDO" class="btn btn-success rounded-md text-white font-bold w-full">
+                    Create Delivery Order</button>
+
+                <button @click="createInvoice" class="btn btn-success rounded-md text-white font-bold w-full">
+                    Create Invoice</button>
+            </div>
+
+            <!-- kalau quotation ini dah ada DO dan Invoice, view buttons sahaja akan muncul -->
+            <div class="d-flex gap-1 mb-2" v-else-if="quote.delivery_order && !quote.invoice">
+                <RouterLink :to="{ name: 'DODetails', params: { id: quote.delivery_order } }"
+                    class="btn btn-success rounded-md text-white font-bold w-full">
+                    DO Details
                 </RouterLink>
-                <RouterLink :to="{name: 'InvoiceDetails', params:{id: InvoiceId}}"
-                        class="btn btn-success rounded-md text-white font-bold w-full"> 
-                        Invoice Details
+                <RouterLink :to="{ name: 'InvoiceDetails', params: { id: quote.invoice } }"
+                    class="btn btn-success rounded-md text-white font-bold w-full">
+                    Invoice Details
                 </RouterLink>
+            </div>
+
+
+            <!-- DEBUG -->
+            <div class="bg-white p-3 my-3 rounded-md gap-1 mt-5">
+                <p v-if="!quote.delivery_order">Delivery Order is missing</p>
+                <p v-else>Delivery Order is available</p>
+
+                <p v-if="!quote.invoice">Invoice is missing</p>
+                <p v-else>Invoice is available</p>
+            </div>
         </div>
+
     </main>
 </template>
 
@@ -125,12 +170,14 @@
 import QuoteEdit from '@/components/QuoteEdit.vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const route = useRoute();
-const quote = ref({});
+const quote = ref({
+    status: 0,
+});
 const items = ref([]);
 const devOr = ref({});
 const inv = ref({});
@@ -138,24 +185,43 @@ const showEditModal = ref(false);
 const doId = ref({})
 const InvoiceId = ref({})
 const quoteId = defineProps({
-    id:{
+    id: {
         required: true,
         type: String
     }
 })
 
+const checkQuoteStatus = () => {
+    console.log('Delivery Order:', this.quote.delivery_order);
+    console.log('Invoice:', this.quote.invoice);
+
+    // Menyemak jika Delivery Order dan Invoice ada atau hilang
+    if (!this.quote.delivery_order) {
+        console.log('Delivery Order is missing');
+    } else {
+        console.log('Delivery Order is available');
+    }
+
+    if (!this.quote.invoice) {
+        console.log('Invoice is missing');
+    } else {
+        console.log('Invoice is available');
+    }
+}
+
+
 //Fetch quotation details
 const fetchQuoteDetails = async () => {
     try {
-        const response = await axios.get(`http://quotation.test/api/Quotation/`+quoteId.id );
-        const { q_delivery_orders, q_invoices} = response.data
+        const response = await axios.get(`http://quotation.test/api/Quotation/` + quoteId.id);
+        const { q_delivery_orders, q_invoices } = response.data
 
-        if(q_delivery_orders != null)
+        if (q_delivery_orders != null)
             doId.value = q_delivery_orders.id
         else
             doId.value = 'nonexistent'
 
-        if(q_invoices != null)
+        if (q_invoices != null)
             InvoiceId.value = q_invoices.id
         else
             InvoiceId.value = 'nonexistent'
@@ -163,6 +229,8 @@ const fetchQuoteDetails = async () => {
         if (response.data) {
             quote.value = response.data;
             items.value = response.data.q_items || [];
+
+            console.log("Borrower ID:", response.data.borrower_id);
         }
     } catch (error) {
         console.error("Error fetching quotation: ", error);
@@ -173,7 +241,7 @@ const fetchQuoteDetails = async () => {
 const downloadDoc = async () => {
     try {
 
-        const response = await axios.get(`http://quotation.test/api/Quotations/${quote.value.id}/download`, {
+        const response = await axios.get(`http://quotation.test/api/Quotation/${quote.value.id}/download`, {
             responseType: 'blob'
         });
 
@@ -236,32 +304,74 @@ const saveEdit = async (updatedData) => {
     }
 };
 
-const navigateToDO = () => {
+const confirmQuotation = async () => {
+    quote.value.status = 1;
+
+    try {
+        await axios.put(`http://quotation.test/api/Quotation/${quote.value.id}/Confirm`);
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Quotation Confirmed!',
+            text: 'You can now create a Delivery Order and Invoice.',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#4cbb17'
+        });
+    } catch (error) {
+        console.error('Error confirming quotation:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Something went wrong',
+            text: 'Please try again.',
+            confirmButtonText: 'OK',
+        });
+    }
+}
+
+const isDisabled = computed(() => quote.value.status === 1);
+
+const confirmButtonClass = computed(() => ({
+    'btn btn-warning text-white': !isDisabled.value, // Kalau belum confirm, warna asal
+    'btn btn-secondary text-white': isDisabled.value // Kalau confirmed, tukar ke kelabu
+}));
+
+
+const statusText = computed(() => {
+    return quote.value.status === 1 ? 'Confirmed' : 'Not Confirmed';
+});
+
+const statusColor = computed(() => {
+    return quote.value.status === 1 ? 'text-success' : 'text-secondary';
+});
+
+const createDO = () => {
     router.push('/create-delivery-order');
 }
 
-const navigateToInvoice = () => {
+const createInvoice = () => {
     router.push('/create-invoice');
 }
 
-const navigateToDODetails = () => {
-    if (devOr.value) {
-        router.push(`/DO/${devOr.value.id}`);
-    } else {
-        alert("No Delivery Order linked to this Quotation");
-    }
-}
+// const viewDO = () => {
+//     if (devOr.value) {
+//         router.push(`/DO/${devOr.value.id}`);
+//     } else {
+//         alert("No Delivery Order linked to this Quotation");
+//     }
+// }
 
-const navigateToInvDetails = () => {
-    if (inv.value) {
-        router.push(`/Invoice/${inv.value.id}`);
-    } else {
-        alert("No Invoice linked to this Quotation");
-    }
-}
+// const viewInvoice = () => {
+//     if (inv.value) {
+//         router.push(`/Invoice/${inv.value.id}`);
+//     } else {
+//         alert("No Invoice linked to this Quotation");
+//     }
+// }
 
 onMounted(async () => {
     fetchQuoteDetails();
+
+
 });
 </script>
 

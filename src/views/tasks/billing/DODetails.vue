@@ -8,13 +8,13 @@
                     <p class="mb-0">Subject: {{ quote.subject }}</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <button @click="downloadDoc" class="btn btn-primary rounded-md text-white font-bold">
+                    <button @click="downloadDoc" class="btn btn-primary h-12 w-20">
                         <span class="material-icons text-white align-middle">
                             download
                         </span>
                     </button>
-                    <button @click="openModal" class="btn btn-success rounded-md text-white font-bold">Edit</button>
-                    <button class="btn btn-danger">Delete</button>
+                    <button @click="openModal" class="btn btn-success h-12 w-20">Edit</button>
+                    <button class="btn btn-danger h-12 w-20">Delete</button>
 
                     <DoEdit v-if="showEditModal" :showEditModal="showEditModal" :devOr="devOr"
                         @update:items="items = $event" @update:showEditModal="showEditModal = $event"
