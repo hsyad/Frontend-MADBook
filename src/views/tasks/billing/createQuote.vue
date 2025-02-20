@@ -140,7 +140,7 @@ const borrower_id = defineProps({
     }
 })
 // FORM DETAILS
-const subject = ref('Subject');
+const subject = ref('');
 
 const logo = ref(null);
 const logo_name = ref(null);
@@ -149,11 +149,11 @@ const logo_path = ref(null);
 
 const issue_date = ref('');
 const valid_date = ref('');
-const c_name = ref('Wapik');
-const c_address = ref('123');
-const c_no = ref('01333333');
-const email = ref('wapik@gmail.com');
-const address = ref('123');
+const c_name = ref('');
+const c_address = ref('');
+const c_no = ref('');
+const email = ref('');
+const address = ref('');
 const items = reactive([{ name: '', price: 0, quantity: 0 }]);
 const notes = ref('');
 

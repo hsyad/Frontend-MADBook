@@ -57,7 +57,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="(quote, index) in quotes" :key="quote.id" class="cursor-pointer"
-                            @click="viewQuoteDetails(quote)">
+                            @click="viewQuoteDetails(quote.id)">
                             <td class="border border-gray-300 w-0 px-4 py-2">{{ index + 1 }}</td>
                             <td class="border border-gray-300 w-0 px-4 py-2">{{ "#00" + quote.id }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ quote.c_name }}</td>
@@ -95,7 +95,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="(invoice, index) in invoices" :key="invoice.id" @click="viewInvoiceDetails(invoice.id)">
+                        <tr v-for="(invoice, index) in invoices" :key="invoice.id"
+                            @click="viewInvoiceDetails(invoice.id)">
                             <td class="border border-gray-300 w-0 px-4 py-2">{{ index + 1 }}</td>
                             <td class="border border-gray-300 w-0 px-4 py-2">{{ "#00" + invoice.id }}</td>
                             <td class="border border-gray-300 px-4 py-2">{{ invoice.quotations.c_name }}</td>
@@ -140,7 +141,7 @@ const router = useRouter();
 const currentTab = ref("quotation");
 
 const viewQuoteDetails = (quote) => {
-    router.push(`/quotation/${quote.id}`);
+    router.push(`/quotation/${quote}`);
 };
 
 const viewInvoiceDetails = (invoice) => {

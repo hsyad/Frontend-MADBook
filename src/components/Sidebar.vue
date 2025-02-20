@@ -56,7 +56,7 @@
         </div>
         <!-- CREATE QUOTE -->
         <div class="sidebar-links">
-            <router-link class="button" to="/create-quotation/2"> Warning! (ID) is hard coded
+            <router-link class="button" to="/create-quotation/2">
                 <span class="material-icons">filter_2</span>
                 <span class="text">Create Quote</span>
             </router-link>
@@ -97,12 +97,12 @@
             </router-link>
         </div>
         <!-- TESTING -->
-        <div class="sidebar-links">
+        <!-- <div class="sidebar-links">
             <router-link class="button" to="/testing">
                 <span class="material-icons">priority_high</span>
                 <span class="text">Testing: Quote Details</span>
             </router-link>
-        </div>
+        </div> -->
 
 
         <!-- <div class="user-menu">
@@ -128,12 +128,12 @@
 
         <div class="flex"></div>
 
-        <div class="sidebar-links">
+        <!-- <div class="sidebar-links">
             <router-link class="button" to="/settings">
                 <span class="material-icons">settings</span>
                 <span class="text">Settings</span>
             </router-link>
-        </div>
+        </div> -->
     </aside>
 </template>
 

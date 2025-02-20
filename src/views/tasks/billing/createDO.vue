@@ -222,7 +222,7 @@ const fetchDetails = async () => {
         qdo.value = response.data;
         quote.value = response.data.quotations;
         items.value = response.data.q_items;
-        total.value = response.data.do_total || 0;
+        // total.value = response.data.do_total || 0;
 
         updatePreview();
     } catch (error) {
