@@ -130,7 +130,7 @@
         <div class="m-4"></div>
 
         <!-- BUTTONS -->
-        <div>
+        <div v-if="quote.status === 1">
             <div class="d-flex gap-1 mb-2" v-if="!doId && !InvoiceId">
 
                 <RouterLink :to="{ name: 'CreateDO', params: { id: quote.id } }"
@@ -300,8 +300,8 @@ const confirmQuotation = async () => {
 const isDisabled = computed(() => quote.value.status === 1);
 
 const confirmButtonClass = computed(() => ({
-    'btn btn-warning text-white': !isDisabled.value, // Kalau belum confirm, warna asal
-    'btn btn-secondary text-white': isDisabled.value // Kalau confirmed, tukar ke kelabu
+    'btn btn-warning text-white': !isDisabled.value,
+    'btn btn-secondary text-white': isDisabled.value
 }));
 
 

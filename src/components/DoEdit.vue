@@ -148,6 +148,7 @@ const toggleBankDetails = () => {
 const saveEdit = async () => {
     try {
         const doId = qdo.value.id;
+        console.log("DO ID: ", doId);
         const saveData = {
             ...qdo.value,
             bank_name: bankDetails.value.bank_name,
@@ -158,6 +159,8 @@ const saveEdit = async () => {
         const response = await axios.put(`http://quotation.test/api/DO/Update/${doId}`, saveData, {
             headers: { "Content-Type": "application/json" }
         });
+
+        console.log("Save Data: ", saveData);
 
         if (response.status === 200) {
             Swal.fire({
