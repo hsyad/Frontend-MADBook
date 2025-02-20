@@ -6,7 +6,7 @@
             <div class="d-flex gap-2 align-middle">
                 <!-- <label for="subject">Subject: </label> -->
                 <p class="fw-semibold">Subject:</p>
-                <p class="text-gray-600">{{ quote.subject }}</p>
+                <p class="text-gray-600">{{ qdo.subject }}</p>
             </div>
         </div>
 
@@ -19,19 +19,8 @@
             <!-- FORM COLUMN -->
             <div v-if="qdo" class="p-3 flex-1">
                 <p class="my-3 mb-5"><strong>DO No: <span class="auto-generate">
-                            #{{ reference_number }}</span></strong>
+                            {{ "#MAD00" + doId.id }}</span></strong>
                 </p>
-
-                <!-- LOGO -->
-                <div class="d-flex align-middle gap-3">
-
-                    <div v-if="logo">
-                        <span class="file-name">{{ quote?.logo }}</span>
-                        <button type="button" class="btn text-danger border-0 rounded-3 p-2 cursor-pointer mx-auto"
-                            @click="deleteLogo" disabled>
-                            <i class="fas fa-xmark"></i> </button>
-                    </div>
-                </div>
 
                 <!-- FORM INPUT -->
                 <form @submit.prevent="generateDocument">
@@ -57,14 +46,14 @@
                     <table class="rounded-md mt-4">
                         <thead>
                             <tr>
-                                <th>Items</th>
-                                <th>Price</th>
+                                <th class="text-start">Items</th>
+                                <th class="h-10 w-52">Quantity</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="(item, index) in items" :key="index">
-                                <td class="text-start">{{ item.name }}</td>
-                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-start py-2 px-3">{{ item.name }}</td>
+                                <td class="text-center col border-l-2 border-gray-200">{{ item.quantity }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -108,17 +97,12 @@
                                     placeholder="Enter your account number" />
                             </div>
 
-                            <div class="form-check mt-3">
-                                <input type="checkbox" id="save_db" v-model="saveToDB" class="form-check-input" />
-                                <label for="save_db" class="form-check-label">Save to Database</label>
-                            </div>
-
                         </div>
                     </div>
 
                     <!-- CALCULATE TOTAL -->
                     <div class="text-lg text-right mt-3 mb-5 font-bold">
-                        <span>Total: RM{{ qdo?.do_total ?? '0.00' }}</span>
+                        <span>Total: RM{{ calculate_total }}</span>
                     </div>
 
                     <!-- GENERATE/SAVE DOCUMENT -->
@@ -133,43 +117,34 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch, watchEffect } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-
-//FORM//
-const reference_number = ref('');
-
-//DISABLED BUTTON
-const isDisabled = ref(true);
-
-//LOGO
-const logo = ref(null);
+import { onBeforeRouteLeave } from 'vue-router';
 
 //CLIENT DETAILS
-const c_name = ref('');
-const c_no = ref('');
-const c_address = ref('');
+const c_name = ref('Hasya');
+const c_no = ref('0123456789');
+const c_address = ref('alamat mana2');
 
 //DATES
-const issue_date = ref('');
-const delivery_date = ref('');
-const due_date = ref('');
+const issue_date = ref('2025-02-20');
+const delivery_date = ref('2025-02-26');
+const due_date = ref('2025-02-28');
 
 //SHIPPING
-const ship_by = ref('');
-const ship_fee = ref(0);
+const ship_by = ref('Ninja Hatori');
+const ship_fee = ref(10);
 
-const notes = ref('');
+const notes = ref('Sila buat pembayaran sebelum tarikh akhir. Terima kasih!');
 
 // BANK DETAILS
 const showForm = ref(false);
-const saveToDB = ref(false);
 const bankDetails = ref({
-    bank_name: '',
-    acc_holder: '',
-    acc_num: '',
+    bank_name: 'CIMB Bank',
+    acc_holder: 'Hasya',
+    acc_num: '1234567890',
 });
 
 // const delivery_order_id = ref(); // Gunakan ref untuk boleh dikemas kini
@@ -181,8 +156,8 @@ const total = ref(0); // Deklarasikan total supaya tidak undefined
 const previewContent = ref('');
 const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
 
-const quote_id = ref('');
-const props = defineProps({
+const quoteId = ref('');
+const doId = defineProps({
     id: {
         required: true,
         type: String
@@ -190,15 +165,10 @@ const props = defineProps({
 })
 
 const doData = ref({
-    quote_id: quote_id.value
+    quoteId: quoteId.value
 });
 
-const generateRandNum = () => {
-    const randomNumber = Math.floor(Math.random() * 10000);
-    reference_number.value = `${randomNumber}`;
-};
-
-// Calculate the total of the items in the quotation
+// Calculate the total of the items amount + ship_fee
 const calculate_total = computed(() => {
     const q_total = items.value.reduce((sum, item) => sum + item.price * item.quantity, 0);
     return (q_total + parseFloat(ship_fee.value)).toFixed(2);
@@ -209,16 +179,16 @@ const toggleForm = () => {
 };
 
 const fetchDetails = async () => {
-    if (!props.id) {
+    if (!doId.id) {
         console.error("Error: DO ID is undefined");
         return;
     }
 
     try {
-        const response = await axios.get(`http://quotation.test/api/Quotation/${props.id}`);
+        const response = await axios.get(`http://quotation.test/api/Quotation/${doId.id}`);
         console.log(response.data);
 
-        quote_id.value = response.data.quotation_id;
+        quoteId.value = response.data.quotation_id;
         qdo.value = response.data;
         quote.value = response.data.quotations;
         items.value = response.data.q_items;
@@ -230,18 +200,8 @@ const fetchDetails = async () => {
     }
 };
 
-const updatePreview = () => {
-    previewContent.value = generatePreviewContent();
-};
-
-watch(qdo, (newVal) => {
-    if (newVal) {
-        updatePreview();
-    }
-});
-
 const generatePreviewContent = () => {
-    previewContent.value = `
+    return `
         <div class="border border-dark rounded p-3">
             <div class="px-3">
                 <h2 class="mt-4 text-end fw-semibold">Delivery Order</h2>
@@ -255,7 +215,7 @@ const generatePreviewContent = () => {
                 </div>
 
                 <p class="text-secondary small">
-                    ${quote.value.address || "No Address"} | ${quote.value.email || "No Email"}
+                    ${qdo.value.address || "No Address"} | ${qdo.value.email || "No Email"}
                 </p>
 
                 <div class="d-flex justify-between my-4">
@@ -274,7 +234,7 @@ const generatePreviewContent = () => {
                             <p class="mb-1"><strong>Due Date: </strong></p>
                         </div>
                         <div class="text-start">
-                            <p class="mb-1">${reference_number.value}</p>
+                            <p class="mb-1">#MAD00${doId.id}</p>
                             <p class="mb-1">${issue_date.value}</p>
                             <p class="mb-1">${delivery_date.value}</p>
                             <p class="mb-1">${due_date.value}</p>
@@ -315,7 +275,7 @@ const generatePreviewContent = () => {
                     </div>
                     <div class="d-flex justify-content-end w-100 fw-semibold">
                         <p class="text-end">Total:</p>
-                        <p class="text-end ms-2">RM${qdo.do_total.value}</p>
+                        <p class="text-end ms-2">RM${calculate_total.value}</p>
                     </div>
                 </div>
 
@@ -332,9 +292,19 @@ const generatePreviewContent = () => {
     `;
 };
 
+const updatePreview = () => {
+    previewContent.value = generatePreviewContent();
+};
+
+watch(qdo, (newVal) => {
+    if (newVal) {
+        updatePreview();
+    }
+});
+
 // Validate form inputs
 const validateForm = () => {
-    if (!c_name.value || items.length === 0) {
+    if (!c_name.value || items.value.length === 0) {
         Swal.fire({
             icon: "error",
             title: "Validation Error",
@@ -352,7 +322,7 @@ const saveDOToDatabase = async () => {
         const response = await axios.post('http://quotation.test/api/DO/Store', doData); // Adjust URL to match your backend
         const doId = response.data.qdo.id;
         Swal.fire("Success", "Delivery order has been saved to the database!", "success");
-        router.push(`/ DO / ${doId} `);
+        router.push(`/DO/${doId}`);
     } catch (error) {
         console.error("Error saving delivery order: ", error);
         Swal.fire("Error", "Failed to save delivery order. Please try again.", "error");
@@ -367,22 +337,55 @@ const generateDocument = () => {
             delivery_date: delivery_date.value.trim(),
             due_date: due_date.value.trim(),
             ship_by: ship_by.value.trim(),
-            ship_fee: ship_fee.value.trim(),
+            ship_fee: parseFloat(ship_fee.value) || 0,
             c_name: c_name.value.trim(),
             c_no: c_no.value.trim(),
             c_address: c_address.value.trim(),
             do_total: (parseFloat(calculate_total.value) + parseFloat(ship_fee.value)).toFixed(2),
             notes: notes.value.trim() || "",
-            quote_id: quote_id.value,
+            quoteId: quoteId.value,
         };
         console.log(doData)
         saveDOToDatabase(doData);
     }
 };
 
-onMounted(() => {
-    generateRandNum();
+const handleBeforeUnload = (event) => {
+    event.preventDefault();
+    event.returnValue = ";"
+};
+
+onBeforeRouteLeave((to, from, next) => {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "The data will not be saved!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, leave",
+        cancelButtonText: "Stay",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            next(); // Allow navigation
+        } else {
+            next(false); // Cancel navigation
+        }
+    });
+});
+
+// Update preview when any field changes
+watchEffect(() => {
     updatePreview();
+});
+
+onMounted(() => {
     fetchDetails();
+    updatePreview();
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
 });
 </script>

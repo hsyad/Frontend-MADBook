@@ -19,7 +19,7 @@
             <div class="p-3 flex-1">
                 <!-- <p v-if="referenceNumber">Quote No: {{ referenceNumber }}</p> -->
                 <p class="my-3 mb-5"><strong>Quote No: <span class="auto-generate">
-                            #{{ reference_number }}</span></strong>
+                            {{ "#MAD00" + quoteId.id }}</span></strong>
                 </p>
 
                 <!-- LOGO -->
@@ -128,45 +128,38 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watchEffect } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watchEffect } from 'vue';
 import DOMPurify from 'dompurify';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import router from '@/router';
+import { onBeforeRouteLeave } from 'vue-router';
 
-const borrower_id = defineProps({
+const borrower_id = ref('');
+const quoteId = defineProps({
     id: {
         required: true,
     }
 })
 // FORM DETAILS
-const subject = ref('');
+const subject = ref('Hasya Test 2');
 
 const logo = ref(null);
-const logo_name = ref(null);
+const logo_name = ref("");
 const logo_input = ref(null);
-const logo_path = ref(null);
 
-const issue_date = ref('');
-const valid_date = ref('');
-const c_name = ref('');
-const c_address = ref('');
-const c_no = ref('');
-const email = ref('');
-const address = ref('');
-const items = reactive([{ name: '', price: 0, quantity: 0 }]);
-const notes = ref('');
-
-const reference_number = ref('');
+const issue_date = ref('2025-01-20');
+const valid_date = ref('2025-01-25');
+const c_name = ref('Hasya');
+const c_address = ref('alamat mana2');
+const c_no = ref('0123456789');
+const email = ref('hasy@example.com');
+const address = ref('alamat1, alamat2, sekian');
+const items = reactive([{ name: 'item 1', price: 10, quantity: 2 }, { name: 'item 2', price: 20, quantity: 2 }]);
+const notes = ref('Hello bello annyeonghaseyo arigato bye byeee');
 
 const previewContent = ref('');
 const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
-
-// Generate random number as reference number (eg: Quote No: #randNum)
-const generateRandNum = () => {
-    const randomNumber = Math.floor(Math.random() * 10000);
-    reference_number.value = `${randomNumber}`;
-};
 
 const triggerLogoUpload = () => {
     logo_input.value.click();
@@ -228,12 +221,12 @@ const generatePreviewContent = () => {
 
           <div class="d-flex gap-2 justify-end">
             <div class="text-end">
-              <p class="mb-1"><strong>Invoice No: </strong></p>
+              <p class="mb-1"><strong>Quote No: </strong></p>
               <p class="mb-1"><strong>Issue Date: </strong></p>
               <p class="mb-1"><strong>Valid Until: </strong></p>
             </div>
             <div class="text-start">
-              <p class="mb-1">${reference_number.value}</p>
+              <p class="mb-1">${quoteId.id}</p>
               <p class="mb-1">${issue_date.value}</p>
               <p class="mb-1">${valid_date.value}</p>
             </div>
@@ -277,19 +270,6 @@ const updatePreview = () => {
     previewContent.value = generatePreviewContent();
 };
 
-const saveQuoteToDatabase = async (quoteData) => {
-    try {
-        // Simulate saving the quote data to a database
-        const response = await axios.post('http://quotation.test/api/Quotation/Store', quoteData); // Adjust URL to match your backend
-        const quoteId = response.data.quotation.id;
-        Swal.fire("Success", "Quotation has been saved to the database!", "success");
-        router.push(`/Quotation/${quoteId}`);
-    } catch (error) {
-        console.error("Error saving quotation: ", error);
-        Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
-    }
-};
-
 // Validate form inputs
 const validateForm = () => {
     if (!subject.value || !c_name.value || items.length === 0) {
@@ -302,6 +282,19 @@ const validateForm = () => {
         return false;
     }
     return true;
+};
+
+const saveQuoteToDatabase = async (quoteData) => {
+    try {
+        // Simulate saving the quote data to a database
+        const response = await axios.post('http://quotation.test/api/Quotation/Store', quoteData); // Adjust URL to match your backend
+        const quoteId = response.data.quotation.id;
+        Swal.fire("Success", "Quotation has been saved to the database!", "success");
+        router.push(`/Quotation/${quoteId}`);
+    } catch (error) {
+        console.error("Error saving quotation: ", error);
+        Swal.fire("Error", "Failed to save quotation. Please try again.", "error");
+    }
 };
 
 // Handle document generation
@@ -327,13 +320,41 @@ const generateDocument = () => {
     }
 };
 
+const handleBeforeUnload = (event) => {
+    event.preventDefault();
+    event.returnValue = ";"
+};
+
+onBeforeRouteLeave((to, from, next) => {
+    Swal.fire({
+        title: "Are you sure?",
+        text: "The data will not be saved!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Yes, leave",
+        cancelButtonText: "Stay",
+    }).then((result) => {
+        if (result.isConfirmed) {
+            next(); // Allow navigation
+        } else {
+            next(false); // Cancel navigation
+        }
+    });
+});
+
 // Update preview when any field changes
 watchEffect(() => {
     updatePreview();
 });
 
 onMounted(() => {
-    generateRandNum();
     updatePreview();
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("beforeunload", handleBeforeUnload);
 });
 </script>
