@@ -135,7 +135,14 @@ import Swal from 'sweetalert2';
 import router from '@/router';
 import { onBeforeRouteLeave } from 'vue-router';
 
-const borrower_id = ref('');
+
+
+
+const borrower_id = ref('2'); //Borrower Id must be defined!
+
+
+
+
 const quoteId = defineProps({
     id: {
         required: true,
@@ -313,7 +320,7 @@ const generateDocument = () => {
             items: items.length > 0 ? items : [],
             total: calculate_total.value || 0,
             notes: notes.value.trim() || "",
-            borrower_id: borrower_id.id
+            borrower_id: borrower_id.value
         };
         console.log(quoteData)
         saveQuoteToDatabase(quoteData);

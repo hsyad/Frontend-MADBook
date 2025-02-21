@@ -133,13 +133,13 @@
         <div v-if="quote.status === 1">
             <div class="d-flex gap-1 mb-2" v-if="!doId && !InvoiceId">
 
-                <RouterLink :to="{ name: 'CreateDO', params: { id: quote.id } }"
+                <RouterLink :to="{ name: 'CreateDO', params: { id: quoteId } }"
                     class="btn btn-success rounded-md text-white font-bold w-full">
                     Create Delivery Order
                 </RouterLink>
 
 
-                <RouterLink :to="{ name: 'CreateInvoice', params: { id: quote.id } }"
+                <RouterLink :to="{ name: 'CreateInvoice', params: { id: quoteId } }"
                     class="btn btn-success rounded-md text-white font-bold w-full">
                     Create Invoice
                 </RouterLink>
