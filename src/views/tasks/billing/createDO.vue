@@ -6,7 +6,7 @@
             <div class="d-flex gap-2 align-middle">
                 <!-- <label for="subject">Subject: </label> -->
                 <p class="fw-semibold">Subject:</p>
-                <p class="text-gray-600">{{ qdo.subject }}</p>
+                <p class="text-gray-600">{{ quote.subject }}</p>
             </div>
         </div>
 
@@ -18,9 +18,6 @@
 
             <!-- FORM COLUMN -->
             <div v-if="qdo" class="p-3 flex-1">
-                <p class="my-3 mb-5"><strong>DO No: <span class="auto-generate">
-                            {{ "#MAD00" + doId.id }}</span></strong>
-                </p>
 
                 <!-- FORM INPUT -->
                 <form @submit.prevent="generateDocument">
@@ -52,8 +49,14 @@
                         </thead>
                         <tbody>
                             <tr v-for="(item, index) in items" :key="index">
-                                <td class="text-start py-2 px-3">{{ item.name }}</td>
-                                <td class="text-center col border-l-2 border-gray-200">{{ item.quantity }}</td>
+                                <td>{{ index + 1 }}</td>
+                                <td><input class="mt-2" type="text" v-model="item.name" disabled /></td>
+                                <td><input type="number" v-model="item.price" disabled /></td>
+                                <td><input type="number" v-model="item.quantity" disabled /></td>
+                                <td>{{ (item.quantity * item.price).toFixed(2) || 0 }}</td>
+                                <td><button type="button"
+                                        class="btn text-danger border-0 rounded-3 p-2 cursor-pointer d-block mx-auto"
+                                        @click="removeItem(index)" disabled><i class="fas fa-trash"></i></button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -151,13 +154,11 @@ const bankDetails = ref({
 const quote = ref({});
 const items = ref([]);
 const qdo = ref({});
-const total = ref(0); // Deklarasikan total supaya tidak undefined
 
 const previewContent = ref('');
 const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
 
-const quoteId = ref('');
-const doId = defineProps({
+const quoteId = defineProps({
     id: {
         required: true,
         type: String
@@ -179,22 +180,24 @@ const toggleForm = () => {
 };
 
 const fetchDetails = async () => {
-    if (!doId.id) {
-        console.error("Error: DO ID is undefined");
+    if (!quoteId) {
+        console.error("Error: Quote ID is undefined");
         return;
     }
 
     try {
-        const response = await axios.get(`http://quotation.test/api/Quotation/${doId.id}`);
+        const response = await axios.get(`http://quotation.test/api/Quotation/${quoteId.id}`);
         console.log(response.data);
 
-        quoteId.value = response.data.quotation_id;
-        qdo.value = response.data;
-        quote.value = response.data.quotations;
-        items.value = response.data.q_items;
-        // total.value = response.data.do_total || 0;
+        // Ensure response contains expected data before assigning
+        if (response.data) {
+            quote.value = response.data.quotations || [];
+            items.value = response.data.q_items || [];
 
-        updatePreview();
+            updatePreview(); // Ensure updatePreview() exists
+        } else {
+            console.error("Error: Empty response data");
+        }
     } catch (error) {
         console.error("Error fetching details:", error);
     }
@@ -215,7 +218,7 @@ const generatePreviewContent = () => {
                 </div>
 
                 <p class="text-secondary small">
-                    ${qdo.value.address || "No Address"} | ${qdo.value.email || "No Email"}
+                    ${quote.value.address || "No Address"} | ${quote.value.email || "No Email"}
                 </p>
 
                 <div class="d-flex justify-between my-4">
@@ -234,7 +237,6 @@ const generatePreviewContent = () => {
                             <p class="mb-1"><strong>Due Date: </strong></p>
                         </div>
                         <div class="text-start">
-                            <p class="mb-1">#MAD00${doId.id}</p>
                             <p class="mb-1">${issue_date.value}</p>
                             <p class="mb-1">${delivery_date.value}</p>
                             <p class="mb-1">${due_date.value}</p>

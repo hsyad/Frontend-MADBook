@@ -16,28 +16,26 @@
             <div class="d-flex flex-column p-3 border-end" style="flex:0.8" v-html="sanitizedContent"></div>
 
             <!-- FORM COLUMN -->
-            <div class="p-3 flex-1">
-                <p class="my-3 mb-5"><strong>Invoice No: <span class="auto-generate">
-                            {{ "#MAD00" + invoiceId.id }}</span></strong>
-                </p>
+            <div v-if="inv" class="p-3 flex-1">
 
                 <!-- FORM INPUT -->
                 <form @submit.prevent="generateDocument">
                     <div class="d-flex gap-2 align-baseline">
                         <div class="flex-1">
-                            <label for="name">Delivery To:</label>
-                            <input type="text" v-model="inv.c_name" placeholder="Enter customer name" disabled />
-                            <input type="text" v-model="inv.c_no" placeholder="Enter customer phone number" disabled />
-                            <textarea rows="3" v-model="inv.c_address"
+                            <label for="name">Bill To:</label>
+                            <input type="text" v-model="quote.c_name" placeholder="Enter customer name" disabled />
+                            <input type="text" v-model="quote.c_no" placeholder="Enter customer phone number"
+                                disabled />
+                            <textarea rows="3" v-model="quote.c_address"
                                 placeholder="Eg: 456 Client Road,&#10;Town, 12345,&#10;State" disabled />
                         </div>
                         <div class="flex-1">
                             <label for="date">Issue Date: </label>
                             <input type="date" v-model="issue_date" required />
                             <label class="mt-2" for="date">Delivery Date: </label>
-                            <input type="date" v-model="inv.delivery_date" disabled />
+                            <input type="date" v-model="qdo.delivery_date" disabled />
                             <label class="mt-2" for="date">Due Date: </label>
-                            <input type="date" v-model="inv.due_date" disabled />
+                            <input type="date" v-model="qdo.due_date" disabled />
                         </div>
                     </div>
 
@@ -54,12 +52,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="(item, index) in inv.items" :key="index">
+                            <tr v-for="(item, index) in items" :key="index">
                                 <td>{{ index + 1 }}</td>
                                 <td><input class="mt-2" type="text" v-model="item.name" disabled /></td>
                                 <td><input type="number" v-model="item.price" disabled /></td>
                                 <td><input type="number" v-model="item.quantity" disabled /></td>
-                                <td>{{ (item.quantity * item.price) || 0 }}</td>
+                                <td>{{ (item.quantity * item.price).toFixed(2) || 0 }}</td>
                                 <td><button type="button"
                                         class="btn text-danger border-0 rounded-3 p-2 cursor-pointer d-block mx-auto"
                                         @click="removeItem(index)" disabled><i class="fas fa-trash"></i></button></td>
@@ -70,9 +68,9 @@
                     <!-- SHIPPING -->
                     <div class="d-flex mt-3 gap-2 items-center align-baseline">
                         <label class="whitespace-nowrap" for="name">Ship By:</label>
-                        <input type="text" v-model="inv.ship_by" placeholder="Ninjavan" disabled />
+                        <input type="text" v-model="qdo.ship_by" placeholder="Ninjavan" disabled />
                         <label class="whitespace-nowrap" for="name">Shipping Fee: </label>
-                        <input type="number" v-model="inv.ship_fee" placeholder="RM10" disabled />
+                        <input type="number" v-model="qdo.ship_fee" placeholder="RM10" disabled />
                     </div>
 
                     <!-- NOTES -->
@@ -138,38 +136,19 @@ const issue_date = ref("2025-01-28");
 //NOTES
 const notes = ref("Please ensure payment within the validity period.");
 
-const showForm = ref(false);
-
 const quote = ref({});
 const items = ref([]);
 const qdo = ref({});
-const inv = ref({
-    subject: "",
-    c_name: "",
-    c_no: "",
-    c_address: "",
-    delivery_date: "",
-    due_date: "",
-    items: [
-        { name: "", price: 0, quantity: 0 },
-    ],
-    ship_by: "",
-    ship_fee: 0
-});
 
-const bankDetails = ref({
-    bank_name: "",
-    acc_holder: "",
-    acc_num: ""
-});
+const showForm = ref(false);
+const bankDetails = ref({});
 
+const inv = ref({});
 
 const previewContent = ref('');
 const sanitizedContent = computed(() => DOMPurify.sanitize(previewContent.value));
 
-const quoteId = ref('');
-const doId = ref('');
-const invoiceId = defineProps({
+const quoteId = defineProps({
     id: {
         required: true,
         type: String
@@ -182,7 +161,7 @@ const invData = ref({
 });
 
 const calculate_total = computed(() => {
-    const i_total = qdo.value.do_total;
+    const i_total = qdo.do_total;
     return i_total;
 });
 
@@ -191,36 +170,21 @@ const toggleForm = () => {
 };
 
 const fetchDetails = async () => {
-    if (!invoiceId.id) {  // Corrected: Use `.value` if invoiceId is a ref
-        console.error("Error: Invoice ID is undefined");
+    if (!quoteId) {  // Corrected: Use `.value` if invoiceId is a ref
+        console.error("Error: Quote ID is undefined");
         return;
     }
 
     try {
-        const response = await axios.get(`http://quotation.test/api/Quotation/${invoiceId.id}`);
+        const response = await axios.get(`http://quotation.test/api/Quotation/${quoteId.id}`);
         console.log(response.data);
 
         // Ensure response contains expected data before assigning
         if (response.data) {
-            qdo.value = response.data;
+            qdo.value = response.data.q_delivery_orders || [];
             quote.value = response.data.quotations || [];
             items.value = response.data.q_items || [];
-            doId.value = response.data.delivery_order_id || null; // Handle possible undefined value
-            quoteId.value = response.data.quotation_id || null; // Handle possible undefined value
-
-            // Pre-fill form fields
-            inv.value = {
-                issue_date: response.data.issue_date || "",
-                ship_by: response.data.ship_by || "",
-                ship_fee: response.data.ship_fee || 0,
-                due_date: response.data.due_date || "",
-            };
-
-            bankDetails.value = {
-                bank_name: response.data.bank_name || "",
-                acc_holder: response.data.acc_holder || "",
-                acc_num: response.data.acc_num || "",
-            };
+            bankDetails.value = response.data.q_bank_details || [];
 
             updatePreview(); // Ensure updatePreview() exists
         } else {
@@ -238,7 +202,7 @@ const generatePreviewContent = () => {
                 <h2 class="mt-4 text-end fw-semibold">Invoice</h2>
 
                 <div class="d-flex justify-flex-start items-center my-4">
-                    ${quote?.value?.logo ? `
+                    ${quote.value?.logo ? `
                     <div class="d-inline-block overflow-hidden h-20">
                         <img src="${quote.value.logo}" alt="logo" class="h-100 object-contain">
                     </div>
@@ -246,29 +210,27 @@ const generatePreviewContent = () => {
                 </div>
 
                 <p class="text-secondary small">
-                    ${quote?.value?.address || "No Address"} | ${quote?.value?.email || "No Email"}
+                    ${quote.value.address || "No Address"} | ${quote.value.email || "No Email"}
                 </p>
 
                 <div class="d-flex justify-between my-4">
                     <div class="text-start flex-grow-1">
                         <p class="mb-1"><strong>Bill To:</strong></p>
-                        <p class="mb-1 fs-7">${qdo?.c_name || "No Name"}</p>
-                        <p class="mb-1 fs-7">${qdo?.c_no?.value || "No Contact"}</p>
-                        <p class="mb-1 fs-7 whitespace-pre">${qdo?.c_address?.value || "No Address"}</p>
+                        <p class="mb-1 fs-7">${quote.value.c_name || "No Name"}</p>
+                        <p class="mb-1 fs-7">${quote.value.c_no || "No Contact"}</p>
+                        <p class="mb-1 fs-7 whitespace-pre">${quote.value.c_address || "No Address"}</p>
                     </div>
 
                     <div class="d-flex gap-2 justify-end">
                         <div class="text-end">
-                            <p class="mb-1"><strong>Invoice No: </strong></p>
                             <p class="mb-1"><strong>Issue Date: </strong></p>
                             <p class="mb-1"><strong>Delivery Date: </strong></p>
                             <p class="mb-1"><strong>Due Date: </strong></p>
                         </div>
                         <div class="text-start">
-                            <p class="mb-1">${invoiceId?.id || "N/A"}</p>
-                            <p class="mb-1">${inv?.issue_date?.value || "N/A"}</p>
-                            <p class="mb-1">${qdo?.delivery_date?.value || "N/A"}</p>
-                            <p class="mb-1">${qdo?.due_date?.value || "N/A"}</p>
+                            <p class="mb-1">${issue_date.value || "N/A"}</p>
+                            <p class="mb-1">${qdo.value.delivery_date || "N/A"}</p>
+                            <p class="mb-1">${qdo.value.due_date || "N/A"}</p>
                         </div>
                     </div>
                 </div>
@@ -284,37 +246,39 @@ const generatePreviewContent = () => {
                         </tr>
                     </thead>
                     <tbody class="border-bottom">
-                        ${items?.length > 0 ? items.map((item, index) => `
+                        ${items.value.length > 0
+            ? items.value.map((item, index) => `
                             <tr>
                                 <td>${index + 1}</td>
-                                <td class="text-start">${item?.name || "N/A"}</td>
-                                <td>RM${item?.price?.toFixed(2) || "0.00"}</td>
-                                <td>${item?.quantity || "0"}</td>
-                                <td>RM${(item?.price * item?.quantity || 0).toFixed(2)}</td>
-                            </tr>
-                        `).join("") : `<tr><td colspan="5" class="text-center">No items found</td></tr>`}
+                                <td class="text-start">${item.name}</td>
+                                <td>${item.price}</td>
+                                <td>${item.quantity}</td>
+                                <td>${(item.price * item.quantity).toFixed(2)}</td>
+
+                        `).join("")
+            : `<tr><td colspan="2" class="text-center">No items found</td></tr>`}
                     </tbody>
                 </table>
 
                 <div class="d-flex gap-3 justify-end m-1">
                     <p class="mb-1 text-end">Ship By: </p>
-                    <p class="mb-1 text-start">${inv?.ship_by?.value || "N/A"}</p>
+                    <p class="mb-1 text-start">${qdo.value.ship_by || "N/A"}</p>
                 </div>
                 <div class="d-flex gap-3 justify-end m-1">
                     <p class="mb-1 text-end">Shipping Fee: </p>
-                    <p class="mb-1 text-start">RM${inv?.ship_fee?.value?.toFixed(2) || "0.00"}</p>
+                    <p class="mb-1 text-start">RM${qdo.value.ship_fee}</p>
                 </div>
                 <div class="d-flex gap-3 justify-end m-1 text-lg">
                     <p class="fw-bold">Total: </p>
-                    <p class="fw-bold">RM${typeof calculate_total === 'function' ? calculate_total() : (calculate_total?.value || "0.00")}</p>
+                    <p class="fw-bold">RM${calculate_total.value}</p>
                 </div>
 
-                <p class="mt-5"><strong>Notes:</strong> ${notes?.value || "No Notes"}</p>
+                <p class="mt-5"><strong>Notes:</strong> ${notes.value || "No Notes"}</p>
 
                 <div class="mt-4 mb-4 border-s-8 border-emerald-500 pl-4">
-                    <p class="mt-3 mb-px text-sm">${bankDetails?.value?.bank_name || "No Bank Name"}</p>
-                    <p class="mb-px text-sm">${bankDetails?.value?.acc_holder || "No Account Holder"}</p>
-                    <p class="mb-px text-sm">${bankDetails?.value?.acc_num || "No Account Number"}</p>
+                    <p class="mt-3 mb-px text-sm">${bankDetails.value.bank_name}</p>
+                    <p class="mb-px text-sm">${bankDetails.value.acc_holder}</p>
+                    <p class="mb-px text-sm">${bankDetails.value.acc_num}</p>
                 </div>
             </div>
         </div>
@@ -326,11 +290,6 @@ const updatePreview = () => {
     previewContent.value = generatePreviewContent();
 };
 
-watchEffect(() => {
-    updatePreview();
-});
-
-
 watch(inv, (newVal) => {
     if (newVal) {
         updatePreview();
@@ -338,7 +297,7 @@ watch(inv, (newVal) => {
 });
 
 const validateForm = () => {
-    if (!c_name.value || items.value.length === 0) {
+    if (!issue_date.value || items.value.length === 0) {
         Swal.fire({
             icon: "error",
             title: "Validation Error",
@@ -363,9 +322,10 @@ const saveInvToDatabase = async () => {
     }
 };
 
+// Handle document generation
 const generateDocument = () => {
     if (validateForm()) {
-        const doData = {
+        const invData = {
             issue_date: issue_date.value.trim(),
             i_total: (parseFloat(calculate_total.value) + parseFloat(ship_fee.value)).toFixed(2),
             notes: notes.value.trim() || "",
@@ -399,6 +359,10 @@ onBeforeRouteLeave((to, from, next) => {
             next(false); // Cancel navigation
         }
     });
+});
+
+watchEffect(() => {
+    updatePreview();
 });
 
 onMounted(() => {
